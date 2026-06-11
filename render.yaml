@@ -1,0 +1,19 @@
+# Render Blueprint — deploys Beacon as a Docker web service.
+# In Render: New + > Blueprint > connect this repo. Render reads this file.
+# Secrets (sync: false) are NOT stored here — you set them in the dashboard.
+services:
+  - type: web
+    name: beacon
+    runtime: docker
+    plan: starter            # ~$7/mo, always-on. Use "free" to trial (sleeps when idle).
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: ANTHROPIC_API_KEY      # your Claude Opus 4.8 key
+        sync: false                 # set in the Render dashboard, never in git
+      - key: BEACON_ACCESS_CODE     # the code clients type to enter
+        sync: false
+      - key: BEACON_RATE_LIMIT
+        value: "20"
+      - key: BEACON_RATE_WINDOW
+        value: "600"
