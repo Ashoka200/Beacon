@@ -18,6 +18,7 @@ from planner import Planner
 from audience import Audience
 from reach import Reach
 from creative_studio import CreativeStudio
+from media_studio import MediaStudio
 from launcher import Launcher
 from optimizer import Optimizer
 from capability_optimizer import CapabilityOptimizer
@@ -31,7 +32,7 @@ def build_fleet():
 
     orch = Orchestrator()
     for a in [Planner(fly), Audience(), Reach(), CreativeStudio(fly, reg),
-              Launcher(reg), Optimizer(fly), CapabilityOptimizer(), LegalWatch()]:
+              MediaStudio(), Launcher(reg), Optimizer(fly), CapabilityOptimizer(), LegalWatch()]:
         orch.register(a)
     return orch, reg, fly
 

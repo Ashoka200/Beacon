@@ -16,6 +16,7 @@ class Capability(str, Enum):
     DEFINE_AUDIENCE = "define_audience"
     SET_REACH = "set_reach"
     MAKE_CREATIVE = "make_creative"
+    GENERATE_MEDIA = "generate_media"   # renders real image/video via a provider
     PUBLISH = "publish"                 # destructive — gated
     MEASURE = "measure"
     SCAN_LAW = "scan_law"               # drafts only
@@ -26,7 +27,8 @@ class Capability(str, Enum):
 # Actions that may NEVER run without an accountable human/client decision,
 # no matter which agent requests them. Authority is bound to the ACTION.
 HUMAN_GATED = {Capability.PUBLISH}
-CLIENT_GATED = {Capability.MAKE_CREATIVE}   # creative must be client-accepted before use
+CLIENT_GATED = {Capability.MAKE_CREATIVE,    # creative must be client-accepted before use
+                Capability.GENERATE_MEDIA}    # rendered media must be accepted before use
 
 
 @dataclass
