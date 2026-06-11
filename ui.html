@@ -5,185 +5,217 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Beacon — Get seen. Stay trusted.</title>
 <style>
-  :root {
-    --navy: #0f2540;
-    --navy-700: #16335a;
-    --ink: #1c2733;
-    --slate: #5a6b7e;
-    --gold: #e8a33d;
-    --gold-soft: #f6d79e;
-    --paper: #f7f5f0;
-    --card: #ffffff;
-    --line: #e4e0d6;
-    --ok: #1f8a5b;
-    --warn: #c9802b;
-    --shadow: 0 1px 2px rgba(15,37,64,.06), 0 12px 32px rgba(15,37,64,.08);
+  :root{
+    --navy:#0f2540; --navy-700:#16335a; --navy-50:#eef2f8;
+    --ink:#1c2733; --slate:#5f6e80; --line:#e3e7ee;
+    --gold:#e8a33d; --gold-deep:#c9802b; --gold-soft:#fdf3e0;
+    --paper:#f6f8fb; --card:#fff;
+    --ok:#1e8e5a; --ok-soft:#e6f4ec; --bad:#c5352f; --bad-soft:#fdecea;
+    --sh-1:0 1px 2px rgba(16,24,40,.05);
+    --sh-2:0 1px 3px rgba(16,24,40,.07),0 8px 24px rgba(16,24,40,.08);
+    --sh-3:0 12px 40px rgba(16,24,40,.16);
+    --r:14px;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  .serif { font-family: Georgia, "Times New Roman", serif; }
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
 
-  /* ---------- top bar ---------- */
-  header {
-    background: var(--navy);
-    color: #fff;
-    border-bottom: 3px solid var(--gold);
-  }
-  .bar {
-    max-width: 1080px; margin: 0 auto; padding: 16px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand .mark { width: 34px; height: 34px; flex: none; }
-  .brand .name { font-family: Georgia, serif; font-size: 26px; letter-spacing: .5px; font-weight: 700; }
-  .brand .name b { color: var(--gold); font-weight: 700; }
-  .tag { color: var(--gold-soft); font-size: 13px; letter-spacing: .3px; }
-  .pill {
-    font-size: 12px; color: #cdd8e6; border: 1px solid #2c466e;
-    border-radius: 999px; padding: 4px 11px;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(31,138,91,.25); }
+  /* ---------- header ---------- */
+  header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+  .bar{max-width:1140px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:11px;cursor:pointer}
+  .brand .mark{width:30px;height:30px;color:var(--navy)}
+  .brand .name{font-family:Georgia,serif;font-size:23px;font-weight:700;color:var(--navy);letter-spacing:.3px}
+  .brand .tg{font-size:11.5px;color:var(--slate);margin-top:-3px}
+  .pill{font-size:12px;color:var(--slate);border:1px solid var(--line);border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:7px;background:#fff}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(30,142,90,.18)}
 
-  /* ---------- hero ---------- */
-  .hero {
-    max-width: 1080px; margin: 0 auto; padding: 44px 24px 8px;
-  }
-  .hero h1 { font-size: 38px; line-height: 1.15; margin: 0 0 10px; color: var(--navy); }
-  .hero h1 .glow { color: var(--gold); }
-  .hero p.sub { font-size: 17px; color: var(--slate); margin: 0 0 4px; max-width: 640px; }
+  /* ---------- wizard ---------- */
+  .wizwrap{max-width:760px;margin:0 auto;padding:36px 20px 80px}
+  .wizhead{text-align:center;margin-bottom:26px}
+  .wizhead h1{font-family:Georgia,serif;font-size:30px;color:var(--navy);margin:0 0 6px}
+  .wizhead p{color:var(--slate);margin:0;font-size:15px}
 
-  /* ---------- layout ---------- */
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
-  @media (max-width: 880px){ .wrap { grid-template-columns: 1fr; } }
+  .stepper{display:flex;align-items:center;justify-content:center;gap:0;margin:26px 0 30px}
+  .stp{display:flex;align-items:center;gap:9px}
+  .stp .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13.5px;font-weight:700;border:2px solid var(--line);color:var(--slate);background:#fff;transition:all .25s}
+  .stp.active .n{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 0 0 5px var(--navy-50)}
+  .stp.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+  .stp .t{font-size:13px;font-weight:600;color:var(--slate)}
+  .stp.active .t{color:var(--navy)}
+  .conn{width:54px;height:2px;background:var(--line);margin:0 10px}
+  .conn.done{background:var(--ok)}
+  @media(max-width:640px){.stp .t{display:none}.conn{width:26px}}
 
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    box-shadow: var(--shadow); overflow: hidden;
-  }
-  .card .head { padding: 18px 20px 0; }
-  .card .head h2 { font-size: 18px; margin: 0 0 2px; color: var(--navy); }
-  .card .head p { font-size: 13px; color: var(--slate); margin: 0; }
-  .card .body { padding: 18px 20px 22px; }
+  .wcard{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh-2);padding:34px 38px 30px;animation:rise .3s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .wcard h2{font-size:20px;color:var(--navy);margin:0 0 4px}
+  .wcard .sub{font-size:13.5px;color:var(--slate);margin:0 0 22px}
+  @media(max-width:640px){.wcard{padding:24px 18px}}
 
-  label { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin: 14px 0 5px; }
-  label:first-child { margin-top: 0; }
-  input, select {
-    width: 100%; padding: 11px 12px; font-size: 15px; color: var(--ink);
-    border: 1px solid var(--line); border-radius: 9px; background: #fff;
-    font-family: inherit; transition: border-color .15s, box-shadow .15s;
-  }
-  input:focus, select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,163,61,.18); }
+  /* material-ish fields */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .fld{position:relative;margin-bottom:18px}
+  .fld input,.fld select,.fld textarea{width:100%;padding:15px 14px 13px;font-size:15px;color:var(--ink);border:1.5px solid var(--line);border-radius:10px;background:#fff;outline:none;transition:border .15s,box-shadow .15s;font-family:inherit}
+  .fld textarea{resize:vertical;min-height:84px}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3.5px var(--navy-50)}
+  .fld label{position:absolute;left:11px;top:-8px;background:#fff;padding:0 5px;font-size:11.5px;font-weight:600;color:var(--slate);letter-spacing:.2px}
+  .fld .req{color:var(--gold-deep)}
+  .hint{font-size:11.5px;color:var(--slate);margin:-12px 0 16px 4px}
 
-  .btn {
-    width: 100%; margin-top: 18px; padding: 13px 16px; font-size: 15px; font-weight: 700;
-    color: var(--navy); background: var(--gold); border: none; border-radius: 10px;
-    cursor: pointer; letter-spacing: .2px; transition: transform .05s, background .15s, box-shadow .15s;
-    box-shadow: 0 4px 14px rgba(232,163,61,.35);
-  }
-  .btn:hover { background: #f0af4c; }
-  .btn:active { transform: translateY(1px); }
-  .btn:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; }
-  .btn.ghost { background: #fff; color: var(--navy); border: 1.5px solid var(--navy); box-shadow: none; margin-top: 10px; }
-  .btn.ghost:hover { background: #f1f4f8; }
+  /* choice cards + chips */
+  .choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;margin-bottom:18px}
+  .choice{border:1.5px solid var(--line);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;background:#fff;transition:all .15s;user-select:none}
+  .choice .ic{font-size:21px}
+  .choice .lb{font-size:13px;font-weight:600;color:var(--ink);margin-top:5px}
+  .choice:hover{border-color:#b9c4d4}
+  .choice.sel{border-color:var(--navy);background:var(--navy-50);box-shadow:0 0 0 1px var(--navy)}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+  .chp{border:1.5px solid var(--line);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;background:#fff;transition:all .12s;user-select:none}
+  .chp:hover{border-color:#b9c4d4}
+  .chp.sel{background:var(--navy);border-color:var(--navy);color:#fff}
 
-  /* ---------- results ---------- */
-  .results { min-height: 360px; }
-  .tabs { display: flex; gap: 6px; padding: 16px 20px 0; border-bottom: 1px solid var(--line); }
-  .tab {
-    font-size: 13.5px; font-weight: 600; color: var(--slate); background: none; border: none;
-    padding: 9px 14px; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1px;
-  }
-  .tab.active { color: var(--navy); border-bottom-color: var(--gold); }
-  .panel { padding: 22px 24px 26px; }
+  /* slider */
+  .slwrap{margin:4px 2px 20px}
+  .slhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .slhead .lab{font-size:13px;font-weight:600;color:var(--slate)}
+  .slhead .val{font-size:21px;font-weight:800;color:var(--navy)}
+  input[type=range]{width:100%;accent-color:var(--navy);height:32px}
+  .slmarks{display:flex;justify-content:space-between;font-size:11px;color:var(--slate)}
+  .tierline{font-size:12.5px;color:var(--slate);margin-top:6px}
+  .tierline b{color:var(--navy)}
 
-  .placeholder { color: var(--slate); text-align: center; padding: 70px 24px; }
-  .placeholder .lh { width: 56px; height: 56px; opacity: .5; margin-bottom: 14px; }
-  .placeholder h3 { color: var(--navy); margin: 0 0 6px; font-size: 17px; }
+  .wnav{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .btn{padding:12px 26px;font-size:14.5px;font-weight:700;border:none;border-radius:10px;cursor:pointer;letter-spacing:.2px;transition:all .15s}
+  .btn.primary{background:var(--navy);color:#fff;box-shadow:var(--sh-1)}
+  .btn.primary:hover{background:var(--navy-700);box-shadow:var(--sh-2)}
+  .btn.gold{background:var(--gold);color:var(--navy);box-shadow:0 4px 16px rgba(232,163,61,.35)}
+  .btn.gold:hover{filter:brightness(1.05)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+  .btn.ghost:hover{border-color:#b9c4d4}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.sm{padding:8px 16px;font-size:13px;border-radius:8px}
+  .btn.ok{background:var(--ok);color:#fff}
+  .btn.bad{background:#fff;color:var(--bad);border:1.5px solid #f1c3c0}
+  .btn.bad:hover{background:var(--bad-soft)}
 
-  .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* review summary */
+  .rv{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  @media(max-width:640px){.rv{grid-template-columns:1fr}}
+  .rvi{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:12px 15px}
+  .rvi .k{font-size:11px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.6px}
+  .rvi .v{font-size:14.5px;color:var(--ink);font-weight:600;margin-top:2px}
+  .pricebox{background:linear-gradient(135deg,#fff8ec,#fdf3e0);border:1.5px solid var(--gold-soft);border-radius:13px;padding:16px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .pricebox .l .t{font-size:14px;font-weight:700;color:var(--navy)}
+  .pricebox .l .s{font-size:12px;color:var(--gold-deep)}
+  .pricebox .amount{font-size:26px;font-weight:800;color:var(--navy)}
 
-  /* rendered markdown */
-  .doc { font-size: 14.5px; color: var(--ink); }
-  .doc h1 { font-size: 22px; color: var(--navy); margin: 4px 0 8px; font-family: Georgia, serif; }
-  .doc h2 { font-size: 17px; color: var(--navy); margin: 22px 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--line); }
-  .doc h3 { font-size: 15px; color: var(--navy-700); margin: 16px 0 6px; }
-  .doc p { margin: 8px 0; }
-  .doc ul { margin: 8px 0; padding-left: 22px; }
-  .doc li { margin: 3px 0; }
-  .doc strong { color: var(--navy-700); }
-  .doc hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
-  .doc table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13.5px; }
-  .doc th { background: var(--navy); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
-  .doc td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
-  .doc tr:nth-child(even) td { background: #faf8f3; }
+  /* ---------- workspace ---------- */
+  .wswrap{max-width:1140px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:270px 1fr;gap:20px;align-items:start}
+  @media(max-width:900px){.wswrap{grid-template-columns:1fr}}
+  .rail{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:18px;position:sticky;top:74px}
+  @media(max-width:900px){.rail{position:static}}
+  .rail .bizname{font-size:16.5px;font-weight:800;color:var(--navy)}
+  .rail .bizmeta{font-size:12.5px;color:var(--slate);margin:2px 0 14px}
+  .prog{margin:0 0 16px}
+  .pstep{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;color:var(--slate)}
+  .pstep .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--paper);border:1.5px solid var(--line);flex:none}
+  .pstep.run .ic{border-color:var(--gold);}
+  .pstep.done{color:var(--ink)}
+  .pstep.done .ic{background:var(--ok);border-color:var(--ok);color:#fff}
+  .pstep.fail .ic{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
 
-  /* creative variants */
-  .variant { border: 1px solid var(--line); border-radius: 11px; padding: 16px; margin-bottom: 14px; background: #fcfbf8; }
-  .variant .v-id { display: inline-block; background: var(--navy); color: #fff; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 9px; margin-right: 8px; }
-  .variant .concept { margin: 8px 0 14px; font-size: 14px; max-height: 320px; overflow-y: auto; padding-right: 8px; border-left: 3px solid var(--gold-soft); padding-left: 14px; }
-  .variant .concept h2 { font-size: 15px; margin: 14px 0 6px; }
-  .variant .concept h3 { font-size: 13.5px; }
-  .media { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 10px; }
-  @media (max-width: 560px){ .media { grid-template-columns: 1fr; } }
-  .frame { border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; background: repeating-linear-gradient(45deg,#fbfaf6,#fbfaf6 10px,#f6f4ee 10px,#f6f4ee 20px); }
-  .frame-ic { font-size: 26px; opacity: .55; }
-  .frame-t { font-size: 12.5px; font-weight: 700; color: var(--navy); margin-top: 4px; }
-  .frame-s { font-size: 11.5px; color: var(--slate); margin-top: 3px; line-height: 1.4; }
-  .frame-s b { color: var(--navy-700); }
-  .meta { font-size: 12.5px; color: var(--slate); }
-  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 3px 10px; margin: 3px 5px 0 0; }
-  .chip.ok { background: #e7f4ec; color: var(--ok); }
-  .chip.eng { background: #eef2f7; color: var(--navy-700); }
+  .ws{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);min-height:480px;overflow:hidden}
+  .tabs{display:flex;gap:2px;padding:10px 14px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{font-size:13.5px;font-weight:600;color:var(--slate);background:none;border:none;padding:10px 15px;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:7px}
+  .tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tab .bdg{background:var(--gold);color:var(--navy);font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:18px}
+  .panel{padding:24px 28px 30px;animation:rise .25s ease}
+  @media(max-width:640px){.panel{padding:18px 14px}}
 
-  .imggrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  @media (max-width: 560px){ .imggrid { grid-template-columns: 1fr; } }
-  .imgcard { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
-  .imgcard img { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
-  .imgtag { position: absolute; bottom: 8px; left: 8px; background: rgba(15,37,64,.82); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+  .empty{color:var(--slate);text-align:center;padding:60px 24px}
+  .empty .lh{width:52px;height:52px;opacity:.45;margin-bottom:12px;color:var(--navy)}
+  .empty h3{color:var(--navy);margin:0 0 5px;font-size:16px}
+  .spinner{display:inline-block;width:17px;height:17px;border:2.5px solid rgba(15,37,64,.18);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-  .gate {
-    display: flex; gap: 12px; align-items: flex-start; background: #fff7e9; border: 1px solid var(--gold-soft);
-    border-radius: 11px; padding: 14px 16px; margin-top: 4px;
-  }
-  .gate .icn { font-size: 20px; }
-  .gate h4 { margin: 0 0 3px; font-size: 14px; color: var(--warn); }
-  .gate p { margin: 0; font-size: 13px; color: #7a5a26; }
+  /* rendered doc */
+  .doc{font-size:14.5px;color:var(--ink);max-width:760px}
+  .doc h1{font-size:21px;color:var(--navy);margin:4px 0 8px;font-family:Georgia,serif}
+  .doc h2{font-size:16.5px;color:var(--navy);margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  .doc h3{font-size:14.5px;color:var(--navy-700);margin:15px 0 6px}
+  .doc p{margin:8px 0}.doc ul{margin:8px 0;padding-left:22px}.doc li{margin:3px 0}
+  .doc strong{color:var(--navy-700)} .doc hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+  .doc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
+  .doc th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:600}
+  .doc td{border:1px solid var(--line);padding:7px 10px;vertical-align:top}
+  .doc tr:nth-child(even) td{background:#f8fafc}
 
-  .blocked { background: #fdecec; border: 1px solid #f3c2c2; border-radius: 11px; padding: 14px 16px; color: #a3302f; font-size: 13.5px; }
+  .variant{border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px;background:#fbfcfe}
+  .v-id{display:inline-block;background:var(--navy);color:#fff;font-weight:700;font-size:12px;border-radius:6px;padding:2px 10px}
+  .variant .concept{margin:10px 0 4px;font-size:14px;max-height:330px;overflow-y:auto;border-left:3px solid var(--gold);padding-left:14px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 11px;margin:8px 6px 0 0}
+  .chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.eng{background:var(--navy-50);color:var(--navy-700)}
 
-  /* trust strip */
-  .trust { max-width: 1080px; margin: 8px auto 44px; padding: 0 24px; }
-  .trust .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  @media (max-width: 880px){ .trust .grid { grid-template-columns: 1fr 1fr; } }
-  .tcard { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .tcard .ti { font-size: 22px; }
-  .tcard h4 { margin: 8px 0 4px; font-size: 14px; color: var(--navy); }
-  .tcard p { margin: 0; font-size: 12.5px; color: var(--slate); }
+  .imggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  @media(max-width:560px){.imggrid{grid-template-columns:1fr}}
+  .imgcard{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-1)}
+  .imgcard img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover}
+  .imgtag{position:absolute;bottom:8px;left:8px;background:rgba(15,37,64,.84);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
 
-  footer { text-align: center; color: var(--slate); font-size: 12.5px; padding: 26px; border-top: 1px solid var(--line); }
-  footer b { color: var(--navy); }
+  .gatebox2{display:flex;gap:12px;align-items:center;background:var(--gold-soft);border:1px solid #f3dcae;border-radius:12px;padding:14px 16px;margin-top:6px;flex-wrap:wrap}
+  .gatebox2 .tx{flex:1;min-width:200px}
+  .gatebox2 h4{margin:0 0 2px;font-size:14px;color:var(--gold-deep)}
+  .gatebox2 p{margin:0;font-size:12.5px;color:#7a5a26}
+  .blocked{background:var(--bad-soft);border:1px solid #f1c3c0;border-radius:11px;padding:14px 16px;color:var(--bad);font-size:13.5px}
 
-  /* access gate overlay */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(15,37,64,.55); backdrop-filter: blur(3px); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
-  .gatebox { background: #fff; border-radius: 16px; box-shadow: var(--shadow); max-width: 380px; width: 100%; padding: 30px 28px; text-align: center; }
-  .gatebox .lh { width: 48px; height: 48px; color: var(--navy); margin-bottom: 10px; }
-  .gatebox h3 { font-family: Georgia, serif; font-size: 21px; color: var(--navy); margin: 0 0 6px; }
-  .gatebox p { font-size: 13.5px; color: var(--slate); margin: 0 0 18px; }
-  .gatebox input { text-align: center; letter-spacing: 1px; }
+  /* approvals */
+  .apr{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:13px;background:#fff;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .apr .info{flex:1;min-width:220px}
+  .apr .kind{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--slate)}
+  .apr .lbl{font-size:14.5px;font-weight:700;color:var(--navy);margin:2px 0 4px}
+  .apr .tm{font-size:12px;color:var(--slate)}
+  .apr .thumb{width:84px;height:84px;border-radius:9px;object-fit:cover;border:1px solid var(--line)}
+  .apr .acts{display:flex;gap:8px;align-items:center}
+  .st{font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 12px;letter-spacing:.3px}
+  .st.pending{background:var(--gold-soft);color:var(--gold-deep)}
+  .st.approved{background:var(--ok-soft);color:var(--ok)}
+  .st.rejected{background:var(--bad-soft);color:var(--bad)}
+
+  /* pricing */
+  .pnote{background:var(--navy);color:#fff;border-radius:13px;padding:18px 22px;margin-bottom:18px}
+  .pnote h3{margin:0 0 5px;font-size:16px}
+  .pnote p{margin:0;font-size:13px;color:#cdd8e6}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+  .pcard{border:1px solid var(--line);border-radius:13px;padding:18px;background:#fff;display:flex;flex-direction:column}
+  .pcard.hl{border:2px solid var(--gold);box-shadow:var(--sh-2);position:relative}
+  .pcard.hl::before{content:"BEST VALUE";position:absolute;top:-9px;left:14px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:800;border-radius:999px;padding:2px 9px;letter-spacing:.5px}
+  .pcard .nm{font-size:14px;font-weight:700;color:var(--navy)}
+  .pcard .ds{font-size:12px;color:var(--slate);margin:4px 0 12px;flex:1}
+  .pcard .pr{font-size:25px;font-weight:800;color:var(--navy)}
+  .pcard .un{font-size:11.5px;color:var(--slate)}
+  .pcard .cb{font-size:11px;color:var(--gold-deep);margin-top:7px;background:var(--gold-soft);border-radius:7px;padding:5px 9px}
+
+  /* trust + overlay */
+  .truststrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+  @media(max-width:880px){.truststrip{grid-template-columns:1fr 1fr}}
+  .tc{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .tc .i{font-size:19px}.tc h4{margin:6px 0 3px;font-size:13px;color:var(--navy)}.tc p{margin:0;font-size:11.5px;color:var(--slate)}
+  footer{text-align:center;color:var(--slate);font-size:12.5px;padding:24px;border-top:1px solid var(--line);margin-top:30px}
+  footer b{color:var(--navy)}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(15,37,64,.55);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:24px}
+  .gbox{background:#fff;border-radius:16px;box-shadow:var(--sh-3);max-width:380px;width:100%;padding:30px 28px;text-align:center}
+  .gbox .lh{width:46px;height:46px;color:var(--navy);margin-bottom:10px}
+  .gbox h3{font-family:Georgia,serif;font-size:21px;color:var(--navy);margin:0 0 6px}
+  .gbox p{font-size:13.5px;color:var(--slate);margin:0 0 18px}
+  .gbox input{width:100%;text-align:center;letter-spacing:1px;padding:13px;font-size:15px;border:1.5px solid var(--line);border-radius:10px;outline:none}
+  .gbox input:focus{border-color:var(--navy);box-shadow:0 0 0 3.5px var(--navy-50)}
+  .gbox .btn{width:100%;margin-top:14px}
 </style>
 </head>
 <body>
 
-<!-- lighthouse mark, reused -->
 <svg width="0" height="0" style="position:absolute">
   <symbol id="lighthouse" viewBox="0 0 64 64">
     <path d="M26 24h12l3 30H23z" fill="#f7f5f0" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
@@ -196,300 +228,386 @@
 
 <header>
   <div class="bar">
-    <div class="brand">
-      <svg class="mark" style="color:#fff"><use href="#lighthouse"/></svg>
-      <div>
-        <div class="name">Beacon</div>
-        <div class="tag">Get seen. Stay trusted.</div>
-      </div>
+    <div class="brand" onclick="goWizard()">
+      <svg class="mark"><use href="#lighthouse"/></svg>
+      <div><div class="name">Beacon</div><div class="tg">Get seen. Stay trusted.</div></div>
     </div>
     <span class="pill" id="statusPill"><span class="dot"></span> Checking…</span>
   </div>
 </header>
 
-<section class="hero">
-  <h1 class="serif">Big-brand marketing for <span class="glow">local businesses.</span></h1>
-  <p class="sub">An AI marketing team that plans, creates, and launches your campaigns — with a human approving every step. No surprises, no risky auto-posting, no wasted budget.</p>
-</section>
-
-<div class="wrap">
-  <!-- ---------- left: campaign builder ---------- -->
-  <div class="card">
-    <div class="head">
-      <h2>Build a campaign</h2>
-      <p>Tell Beacon about your business.</p>
-    </div>
-    <div class="body">
-      <label for="name">Business name</label>
-      <input id="name" placeholder="e.g. Comfort Inn Henderson" value="Comfort Inn Henderson" />
-
-      <label for="vertical">Industry</label>
-      <select id="vertical">
-        <option value="hospitality">Hotel / Hospitality</option>
-        <option value="dentist">Dentist</option>
-        <option value="salon">Salon / Spa</option>
-        <option value="accounting">Accounting</option>
-        <option value="legal">Legal</option>
-        <option value="plumber">Plumber / Home services</option>
-        <option value="general">Other</option>
-      </select>
-
-      <label for="city">City</label>
-      <input id="city" placeholder="e.g. Henderson" value="Henderson" />
-
-      <label for="goal">Primary goal</label>
-      <select id="goal">
-        <option value="direct bookings">Direct bookings</option>
-        <option value="calls">Phone calls</option>
-        <option value="bookings">Appointments</option>
-        <option value="foot traffic">Foot traffic</option>
-        <option value="leads">Online leads</option>
-      </select>
-
-      <button class="btn" id="planBtn" onclick="runPlan()">✨ Generate campaign plan</button>
-      <button class="btn ghost" id="creativeBtn" onclick="runCreative()">🎬 Draft ad creative</button>
-      <button class="btn ghost" id="imagesBtn" onclick="runImages()">🖼️ Generate images</button>
-    </div>
+<!-- ================= WIZARD ================= -->
+<div class="wizwrap" id="wizard">
+  <div class="wizhead">
+    <h1>Let's build your campaign</h1>
+    <p>A few quick questions — your AI marketing team handles the rest.</p>
   </div>
 
-  <!-- ---------- right: results ---------- -->
-  <div class="card results">
+  <div class="stepper" id="stepper"></div>
+
+  <div class="wcard" id="wbody"><!-- step content injected --></div>
+</div>
+
+<!-- ================= WORKSPACE ================= -->
+<div class="wswrap" id="workspace" style="display:none">
+  <div class="rail">
+    <div class="bizname" id="railName">—</div>
+    <div class="bizmeta" id="railMeta">—</div>
+    <div class="prog" id="railProg"></div>
+    <button class="btn ghost sm" style="width:100%" onclick="goWizard()">← New campaign</button>
+  </div>
+  <div class="ws">
     <div class="tabs">
-      <button class="tab active" id="tab-plan" onclick="showTab('plan')">Campaign plan</button>
-      <button class="tab" id="tab-creative" onclick="showTab('creative')">Ad creative</button>
-      <button class="tab" id="tab-images" onclick="showTab('images')">Images</button>
+      <button class="tab active" id="tab-plan" onclick="showTab('plan')">📋 Strategy</button>
+      <button class="tab" id="tab-creative" onclick="showTab('creative')">🎬 Creative</button>
+      <button class="tab" id="tab-images" onclick="showTab('images')">🖼️ Images</button>
+      <button class="tab" id="tab-approvals" onclick="showTab('approvals');loadApprovals()">✋ Approvals <span class="bdg" id="aprBadge" style="display:none">0</span></button>
+      <button class="tab" id="tab-pricing" onclick="showTab('pricing');loadPricing()">💲 Pricing</button>
     </div>
-
-    <div class="panel" id="panel-plan">
-      <div class="placeholder" id="ph-plan">
-        <svg class="lh" style="color:var(--navy)"><use href="#lighthouse"/></svg>
-        <h3>Your plan will appear here</h3>
-        <p>Fill in your business and click <b>Generate campaign plan</b>.</p>
-      </div>
-    </div>
-
-    <div class="panel" id="panel-creative" style="display:none">
-      <div class="placeholder" id="ph-creative">
-        <svg class="lh" style="color:var(--navy)"><use href="#lighthouse"/></svg>
-        <h3>Ad concepts will appear here</h3>
-        <p>Click <b>Draft ad creative</b> to see variants — each held for your approval.</p>
-      </div>
-    </div>
-
-    <div class="panel" id="panel-images" style="display:none">
-      <div class="placeholder" id="ph-images">
-        <svg class="lh" style="color:var(--navy)"><use href="#lighthouse"/></svg>
-        <h3>Generated images will appear here</h3>
-        <p>Click <b>Generate images</b> to render real ad images with AI — each held for your approval.</p>
-      </div>
-    </div>
+    <div class="panel" id="panel-plan"><div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Working…</h3></div></div>
+    <div class="panel" id="panel-creative" style="display:none"></div>
+    <div class="panel" id="panel-images" style="display:none"></div>
+    <div class="panel" id="panel-approvals" style="display:none"></div>
+    <div class="panel" id="panel-pricing" style="display:none"></div>
   </div>
 </div>
 
-<!-- ---------- trust strip ---------- -->
-<div class="trust">
-  <div class="grid">
-    <div class="tcard"><div class="ti">🔒</div><h4>You approve everything</h4><p>Nothing publishes until a human signs off. Beacon can't go live on its own.</p></div>
-    <div class="tcard"><div class="ti">🛡️</div><h4>Injection-protected</h4><p>Every input is screened by Sentinel before any AI acts on it.</p></div>
-    <div class="tcard"><div class="ti">⚖️</div><h4>Compliance built in</h4><p>AI-disclosure and regional ad rules are enforced automatically.</p></div>
-    <div class="tcard"><div class="ti">📈</div><h4>Learns what works</h4><p>Every result feeds a private performance library that sharpens your next campaign.</p></div>
+<div class="wizwrap" style="padding-top:0" id="trustwrap">
+  <div class="truststrip">
+    <div class="tc"><div class="i">🔒</div><h4>You approve everything</h4><p>Nothing runs until you say so.</p></div>
+    <div class="tc"><div class="i">🛡️</div><h4>Injection-protected</h4><p>Every input screened before AI acts.</p></div>
+    <div class="tc"><div class="i">⚖️</div><h4>Compliance built in</h4><p>AI disclosure & ad rules enforced.</p></div>
+    <div class="tc"><div class="i">💲</div><h4>Honest pricing</h4><p>Our cost + a flat 40%. That's it.</p></div>
   </div>
 </div>
 
-<footer>
-  <b>Beacon</b> &middot; Get seen. Stay trusted. &middot; Powered by Claude Opus 4.8 &middot; <span id="mode">dry-run safe mode</span>
-</footer>
+<footer><b>Beacon</b> · Get seen. Stay trusted. · Powered by Claude Opus 4.8 + Gemini · <span id="mode">safe mode</span></footer>
 
-<!-- access gate (shown only when the server requires a code) -->
 <div class="overlay" id="gateOverlay">
-  <div class="gatebox">
+  <div class="gbox">
     <svg class="lh"><use href="#lighthouse"/></svg>
     <h3>Welcome to Beacon</h3>
     <p>Enter your access code to continue.</p>
-    <input id="gateInput" type="password" placeholder="Access code"
-           onkeydown="if(event.key==='Enter')submitGate()" />
-    <button class="btn" onclick="submitGate()">Enter</button>
+    <input id="gateInput" type="password" placeholder="Access code" onkeydown="if(event.key==='Enter')submitGate()"/>
+    <button class="btn primary" onclick="submitGate()">Enter</button>
   </div>
 </div>
 
 <script>
-const API = ""; // same origin
+/* ============ state ============ */
+const S = {
+  step: 1,
+  biz: { name:"", vertical:"hospitality", city:"", state:"", website:"", phone:"", desc:"" },
+  goal: "direct bookings", budget: 1500,
+  radius: 15, audiences: [], remote: false, offer: "",
+  results: { plan:null, creative:null, images:null },
+  approvalIds: { creative:"", images:"" },
+  bundlePrice: null
+};
+const INDUSTRIES = [["hospitality","🏨","Hotel / Hospitality"],["dentist","🦷","Dental"],["salon","💇","Salon / Spa"],["accounting","🧾","Accounting"],["legal","⚖️","Legal"],["plumber","🔧","Home services"],["general","🏪","Other"]];
+const GOALS = [["direct bookings","🛎️","Direct bookings"],["calls","📞","Phone calls"],["bookings","📅","Appointments"],["foot traffic","🚶","Foot traffic"],["leads","📥","Online leads"]];
+const AUDS = ["Families","Business travelers","Tourists","Locals","Homeowners","Young professionals","Seniors","Students","Event visitors"];
 
-// ---- tiny, safe markdown renderer (headings, bold, lists, tables, hr) ----
-function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function inline(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"); }
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function inline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")}
+function tier(b){return b<800?["Starter","1 channel"]:b<3000?["Growth","up to 3 channels"]:["Pro","up to 5 channels"]}
+
+/* ============ markdown ============ */
 function renderMarkdown(md){
-  const lines = md.replace(/\r/g,"").split("\n");
-  let html = "", i = 0, inList = false;
-  const closeList = () => { if(inList){ html += "</ul>"; inList = false; } };
-  while(i < lines.length){
-    let line = lines[i];
-    // table block
-    if(line.includes("|") && i+1 < lines.length && /^\s*\|?[ :\-|]+\|?\s*$/.test(lines[i+1])){
-      closeList();
-      const header = line.split("|").map(c=>c.trim()).filter(c=>c.length);
-      let t = "<table><thead><tr>" + header.map(h=>"<th>"+inline(h)+"</th>").join("") + "</tr></thead><tbody>";
-      i += 2;
-      while(i < lines.length && lines[i].includes("|")){
-        const cells = lines[i].split("|").map(c=>c.trim()).filter((c,idx,arr)=> !(idx===0&&c==="") && !(idx===arr.length-1&&c===""));
-        t += "<tr>" + cells.map(c=>"<td>"+inline(c)+"</td>").join("") + "</tr>";
-        i++;
-      }
-      html += t + "</tbody></table>";
-      continue;
-    }
-    if(/^###\s+/.test(line)){ closeList(); html += "<h3>"+inline(line.replace(/^###\s+/,""))+"</h3>"; }
-    else if(/^##\s+/.test(line)){ closeList(); html += "<h2>"+inline(line.replace(/^##\s+/,""))+"</h2>"; }
-    else if(/^#\s+/.test(line)){ closeList(); html += "<h1>"+inline(line.replace(/^#\s+/,""))+"</h1>"; }
-    else if(/^\s*[-*]\s+/.test(line)){ if(!inList){ html += "<ul>"; inList = true; } html += "<li>"+inline(line.replace(/^\s*[-*]\s+/,""))+"</li>"; }
-    else if(/^\s*---+\s*$/.test(line)){ closeList(); html += "<hr>"; }
-    else if(line.trim()===""){ closeList(); }
-    else { closeList(); html += "<p>"+inline(line)+"</p>"; }
-    i++;
+  const lines=String(md).replace(/\r/g,"").split("\n");let html="",i=0,inList=false;
+  const closeList=()=>{if(inList){html+="</ul>";inList=false}};
+  while(i<lines.length){let line=lines[i];
+    if(line.includes("|")&&i+1<lines.length&&/^\s*\|?[ :\-|]+\|?\s*$/.test(lines[i+1])){
+      closeList();const header=line.split("|").map(c=>c.trim()).filter(c=>c.length);
+      let t="<table><thead><tr>"+header.map(h=>"<th>"+inline(h)+"</th>").join("")+"</tr></thead><tbody>";i+=2;
+      while(i<lines.length&&lines[i].includes("|")){
+        const cells=lines[i].split("|").map(c=>c.trim()).filter((c,idx,arr)=>!(idx===0&&c==="")&&!(idx===arr.length-1&&c===""));
+        t+="<tr>"+cells.map(c=>"<td>"+inline(c)+"</td>").join("")+"</tr>";i++}
+      html+=t+"</tbody></table>";continue}
+    if(/^###\s+/.test(line)){closeList();html+="<h3>"+inline(line.replace(/^###\s+/,""))+"</h3>"}
+    else if(/^##\s+/.test(line)){closeList();html+="<h2>"+inline(line.replace(/^##\s+/,""))+"</h2>"}
+    else if(/^#\s+/.test(line)){closeList();html+="<h1>"+inline(line.replace(/^#\s+/,""))+"</h1>"}
+    else if(/^\s*[-*]\s+/.test(line)){if(!inList){html+="<ul>";inList=true}html+="<li>"+inline(line.replace(/^\s*[-*]\s+/,""))+"</li>"}
+    else if(/^\s*---+\s*$/.test(line)){closeList();html+="<hr>"}
+    else if(line.trim()===""){closeList()}
+    else{closeList();html+="<p>"+inline(line)+"</p>"}
+    i++}
+  closeList();return html}
+
+/* ============ api ============ */
+function accessCode(){return localStorage.getItem("beacon_access")||""}
+function hdrs(){const h={"Content-Type":"application/json"};const c=accessCode();if(c)h["X-Beacon-Access"]=c;return h}
+async function api(path,opts){const r=await fetch(path,opts);if(r.status===401){localStorage.removeItem("beacon_access");showGate(true);throw new Error("unauthorized")}return r.json()}
+async function call(payload){return api("/route",{method:"POST",headers:hdrs(),body:JSON.stringify(payload)})}
+function showGate(f){document.getElementById("gateOverlay").style.display=f?"flex":"none";if(f)setTimeout(()=>document.getElementById("gateInput").focus(),50)}
+function submitGate(){const v=document.getElementById("gateInput").value.trim();if(v){localStorage.setItem("beacon_access",v);showGate(false)}}
+
+/* ============ wizard rendering ============ */
+const STEPS=["Business","Goals","Audience","Review"];
+function drawStepper(){
+  let h="";
+  STEPS.forEach((t,idx)=>{
+    const n=idx+1,cls=n<S.step?"done":n===S.step?"active":"";
+    h+='<div class="stp '+cls+'"><div class="n">'+(n<S.step?"✓":n)+'</div><div class="t">'+t+'</div></div>';
+    if(n<STEPS.length)h+='<div class="conn'+(n<S.step?" done":"")+'"></div>';
+  });
+  document.getElementById("stepper").innerHTML=h;
+}
+function fld(id,label,val,ph,req,type){
+  return '<div class="fld"><label>'+label+(req?' <span class="req">*</span>':'')+'</label><input id="'+id+'" type="'+(type||"text")+'" value="'+esc(val)+'" placeholder="'+esc(ph||"")+'"/></div>';
+}
+function drawStep(){
+  drawStepper();
+  const w=document.getElementById("wbody");
+  if(S.step===1){
+    let ch='<div class="choices">';
+    INDUSTRIES.forEach(([v,ic,lb])=>{ch+='<div class="choice'+(S.biz.vertical===v?" sel":"")+'" onclick="S.biz.vertical=\''+v+'\';saveStep1();drawStep()"><div class="ic">'+ic+'</div><div class="lb">'+lb+'</div></div>'});
+    ch+='</div>';
+    w.innerHTML='<h2>Tell us about your business</h2><p class="sub">This helps Beacon speak in your voice and target your real customers.</p>'
+      +'<div class="grid2">'+fld("f_name","Business name",S.biz.name,"e.g. Comfort Inn Henderson",true)+fld("f_city","City",S.biz.city,"e.g. Henderson",true)+'</div>'
+      +'<div class="grid2">'+fld("f_state","State / Region",S.biz.state,"e.g. NV")+fld("f_phone","Phone (optional)",S.biz.phone,"(702) 555-0100")+'</div>'
+      +fld("f_web","Website (optional)",S.biz.website,"https://…")
+      +'<label style="font-size:13px;font-weight:600;color:var(--slate);display:block;margin:2px 0 9px">Industry <span class="req">*</span></label>'+ch
+      +'<div class="fld"><label>What makes you special? (optional)</label><textarea id="f_desc" placeholder="e.g. Family-run for 20 years, free breakfast, 10 minutes from the Strip…">'+esc(S.biz.desc)+'</textarea></div>'
+      +'<div class="wnav"><span></span><button class="btn primary" onclick="next()">Continue →</button></div>';
   }
-  closeList();
-  return html;
+  if(S.step===2){
+    let g='<div class="choices">';
+    GOALS.forEach(([v,ic,lb])=>{g+='<div class="choice'+(S.goal===v?" sel":"")+'" onclick="S.goal=\''+v+'\';drawStep()"><div class="ic">'+ic+'</div><div class="lb">'+lb+'</div></div>'});
+    g+='</div>';
+    const [tn,td]=tier(S.budget);
+    w.innerHTML='<h2>What does success look like?</h2><p class="sub">Pick your #1 goal and a comfortable monthly ad budget.</p>'
+      +'<label style="font-size:13px;font-weight:600;color:var(--slate);display:block;margin:0 0 9px">Primary goal <span class="req">*</span></label>'+g
+      +'<div class="slwrap"><div class="slhead"><span class="lab">Monthly ad budget</span><span class="val">$'+S.budget.toLocaleString()+'</span></div>'
+      +'<input type="range" min="250" max="10000" step="250" value="'+S.budget+'" oninput="S.budget=+this.value;drawStep()"/>'
+      +'<div class="slmarks"><span>$250</span><span>$2.5k</span><span>$5k</span><span>$10k</span></div>'
+      +'<div class="tierline">Plan tier: <b>'+tn+'</b> — '+td+'. Ad spend goes to the platforms at cost — never marked up.</div></div>'
+      +'<div class="wnav"><button class="btn ghost" onclick="back()">← Back</button><button class="btn primary" onclick="next()">Continue →</button></div>';
+  }
+  if(S.step===3){
+    let chips='<div class="chips">';
+    AUDS.forEach(a=>{chips+='<span class="chp'+(S.audiences.includes(a)?" sel":"")+'" onclick="toggleAud(\''+a+'\')">'+a+'</span>'});
+    chips+='</div>';
+    w.innerHTML='<h2>Who are your customers?</h2><p class="sub">Beacon targets by intent and location — never by sensitive traits.</p>'
+      +'<div class="slwrap"><div class="slhead"><span class="lab">Service area radius</span><span class="val">'+S.radius+' mi</span></div>'
+      +'<input type="range" min="3" max="60" step="1" value="'+S.radius+'" oninput="S.radius=+this.value;drawStep()"/>'
+      +'<div class="slmarks"><span>3 mi</span><span>30 mi</span><span>60 mi</span></div></div>'
+      +'<label style="font-size:13px;font-weight:600;color:var(--slate);display:block;margin:2px 0 9px">Who should see your ads? (pick any)</label>'+chips
+      +'<div class="fld"><label>Current offer or promotion (optional)</label><input id="f_offer" value="'+esc(S.offer)+'" placeholder="e.g. 15% off direct bookings this summer"/></div>'
+      +'<div class="wnav"><button class="btn ghost" onclick="back()">← Back</button><button class="btn primary" onclick="next()">Review →</button></div>';
+  }
+  if(S.step===4){
+    const [tn]=tier(S.budget);
+    const price=S.bundlePrice?('$'+S.bundlePrice.toFixed(2)):'…';
+    w.innerHTML='<h2>Review & launch</h2><p class="sub">Here\'s what Beacon will build. Nothing publishes without your approval.</p>'
+      +'<div class="rv">'
+      +'<div class="rvi"><div class="k">Business</div><div class="v">'+esc(S.biz.name||"—")+'</div></div>'
+      +'<div class="rvi"><div class="k">Location</div><div class="v">'+esc(S.biz.city||"—")+(S.biz.state?", "+esc(S.biz.state):"")+' · '+S.radius+' mi radius</div></div>'
+      +'<div class="rvi"><div class="k">Industry</div><div class="v">'+esc((INDUSTRIES.find(x=>x[0]===S.biz.vertical)||["","","Other"])[2])+'</div></div>'
+      +'<div class="rvi"><div class="k">Goal & budget</div><div class="v">'+esc(S.goal)+' · $'+S.budget.toLocaleString()+'/mo ('+tn+')</div></div>'
+      +'<div class="rvi"><div class="k">Audience</div><div class="v">'+(S.audiences.length?esc(S.audiences.join(", ")):"Broad local intent")+'</div></div>'
+      +'<div class="rvi"><div class="k">Offer</div><div class="v">'+(S.offer?esc(S.offer):"—")+'</div></div>'
+      +'</div>'
+      +'<div class="pricebox"><div class="l"><div class="t">Campaign Launch Bundle</div><div class="s">Strategy + ad creative + 4 AI images · our cost + 40%, fully transparent</div></div><div class="amount">'+price+'</div></div>'
+      +'<div class="wnav"><button class="btn ghost" onclick="back()">← Back</button><button class="btn gold" onclick="launch()">✨ Create my campaign</button></div>';
+    if(!S.bundlePrice) loadBundlePrice();
+  }
+}
+function saveStep1(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():null};
+  const n=g("f_name");if(n!==null)S.biz.name=n;
+  const c=g("f_city");if(c!==null)S.biz.city=c;
+  const st=g("f_state");if(st!==null)S.biz.state=st;
+  const ph=g("f_phone");if(ph!==null)S.biz.phone=ph;
+  const wb=g("f_web");if(wb!==null)S.biz.website=wb;
+  const d=document.getElementById("f_desc");if(d)S.biz.desc=d.value.trim();
+}
+function toggleAud(a){const i=S.audiences.indexOf(a);if(i>=0)S.audiences.splice(i,1);else S.audiences.push(a);drawStep()}
+function next(){
+  if(S.step===1){saveStep1();if(!S.biz.name||!S.biz.city){alert("Please fill in your business name and city.");return}}
+  if(S.step===3){const o=document.getElementById("f_offer");if(o)S.offer=o.value.trim()}
+  S.step=Math.min(4,S.step+1);drawStep();window.scrollTo({top:0,behavior:"smooth"});
+}
+function back(){if(S.step===3){const o=document.getElementById("f_offer");if(o)S.offer=o.value.trim()}S.step=Math.max(1,S.step-1);drawStep()}
+function goWizard(){document.getElementById("workspace").style.display="none";document.getElementById("wizard").style.display="block";document.getElementById("trustwrap").style.display="block";S.step=1;drawStep()}
+async function loadBundlePrice(){try{const p=await api("/pricing");if(p.ok){S.bundlePrice=p.bundle.price;if(S.step===4)drawStep()}}catch(e){}}
+
+/* ============ launch & generation ============ */
+const PSTEPS=[["plan","Campaign strategy"],["creative","Ad creative"],["images","AI ad images"]];
+function drawProg(states){
+  let h="";
+  PSTEPS.forEach(([k,lb])=>{
+    const st=states[k]||"wait";
+    const ic=st==="done"?"✓":st==="run"?'<span class="spinner" style="width:11px;height:11px;border-width:2px"></span>':st==="fail"?"!":"·";
+    h+='<div class="pstep '+(st==="done"?"done":st==="run"?"run":st==="fail"?"fail":"")+'"><div class="ic">'+ic+'</div>'+lb+'</div>';
+  });
+  document.getElementById("railProg").innerHTML=h;
+}
+function brief(){
+  const ind=(INDUSTRIES.find(x=>x[0]===S.biz.vertical)||["","","business"])[2];
+  return "Business: "+S.biz.name+" ("+ind+") in "+S.biz.city+(S.biz.state?", "+S.biz.state:"")
+    +". Goal: "+S.goal+". Monthly ad budget: $"+S.budget+". Service radius: "+S.radius+" miles."
+    +(S.audiences.length?" Target customers: "+S.audiences.join(", ")+".":"")
+    +(S.offer?" Current offer: "+S.offer+".":"")
+    +(S.biz.desc?" What makes them special: "+S.biz.desc+".":"")
+    +(S.biz.website?" Website: "+S.biz.website+".":"");
+}
+async function launch(){
+  document.getElementById("wizard").style.display="none";
+  document.getElementById("trustwrap").style.display="none";
+  document.getElementById("workspace").style.display="grid";
+  document.getElementById("railName").textContent=S.biz.name;
+  document.getElementById("railMeta").textContent=S.biz.city+(S.biz.state?", "+S.biz.state:"")+" · "+S.goal+" · $"+S.budget.toLocaleString()+"/mo";
+  const states={plan:"run",creative:"wait",images:"wait"};drawProg(states);
+  showTab("plan");
+  document.getElementById("panel-plan").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Building your strategy…</h3><p>Claude Opus 4.8 is planning for '+esc(S.biz.name)+'.</p></div>';
+
+  // 1. strategy
+  try{
+    const res=await call({capability:"plan_campaign",requester:"human",payload:{
+      firm:{vertical:S.biz.vertical,city:S.biz.city,state:S.biz.state,name:S.biz.name,website:S.biz.website,phone:S.biz.phone,description:S.biz.desc},
+      goal:S.goal,budget_monthly_usd:S.budget,radius_miles:S.radius,audiences:S.audiences,offer:S.offer}});
+    if(res.ok){S.results.plan=res.data.plan;document.getElementById("panel-plan").innerHTML='<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>';states.plan="done"}
+    else{document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';states.plan="fail"}
+  }catch(e){document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.plan="fail"}
+  drawProg(states);
+
+  // 2. creative
+  states.creative="run";drawProg(states);
+  document.getElementById("panel-creative").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Drafting ad creative…</h3></div>';
+  try{
+    const res=await call({capability:"make_creative",requester:"planner",payload:{brief:brief(),vertical:S.biz.vertical,jurisdiction:"US"}});
+    if(res.ok){
+      S.results.creative=res.data;S.approvalIds.creative=res.approval_id||"";
+      let html="";
+      (res.data.variants||[]).forEach(v=>{
+        html+='<div class="variant"><span class="v-id">Variant '+esc(v.id)+'</span><div class="concept doc">'+renderMarkdown(String(v.concept||""))+'</div>'
+          +(v.ai_disclosure?'<span class="chip ok">⚖️ AI disclosure attached</span>':'')
+          +'<span class="chip eng">🎥 video concept: '+esc((v.video&&v.video.engine)||"—")+'</span></div>';
+      });
+      html+=aprInline(S.approvalIds.creative,"creative");
+      document.getElementById("panel-creative").innerHTML=html;states.creative="done";
+    }else{document.getElementById("panel-creative").innerHTML='<div class="blocked">🛡️ '+esc(res.blocked_reason||res.error||"")+'</div>';states.creative="fail"}
+  }catch(e){document.getElementById("panel-creative").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.creative="fail"}
+  drawProg(states);refreshBadge();
+
+  // 3. images (two in parallel)
+  states.images="run";drawProg(states);
+  document.getElementById("panel-images").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Rendering ad images…</h3><p>This takes ~10–20 seconds.</p></div>';
+  const ind=(INDUSTRIES.find(x=>x[0]===S.biz.vertical)||["","","business"])[2];
+  const base="Professional photorealistic advertising photo for "+S.biz.name+", a "+ind+" in "+S.biz.city+". "+(S.biz.desc?S.biz.desc+". ":"")+"Warm, trustworthy, premium quality, clean composition with space for ad text. No words, no watermarks.";
+  try{
+    const [r1,r2]=await Promise.all([
+      call({capability:"generate_media",requester:"planner",payload:{prompt:base,media_type:"image",jurisdiction:"US"}}),
+      call({capability:"generate_media",requester:"planner",payload:{prompt:base+" Different scene and angle, golden-hour light.",media_type:"image",jurisdiction:"US"}})
+    ]);
+    let html='<div class="imggrid">',n=0,firstApr="";
+    [r1,r2].forEach(r=>{
+      if(r.ok){(r.data.assets||[]).forEach(a=>{
+        if(a.status==="rendered"&&a.data_url){n++;html+='<div class="imgcard"><img src="'+a.data_url+'"/><div class="imgtag">⚖️ AI-generated</div></div>'}
+      });if(!firstApr&&r.approval_id)firstApr=r.approval_id}
+    });
+    html+='</div>';
+    S.approvalIds.images=firstApr;
+    if(n===0){
+      const a=(r1.data&&r1.data.assets&&r1.data.assets[0])||{};
+      const msg=a.status==="no_provider_configured"||a.status==="no_api_key"?"Image generation isn't switched on for this server yet.":"No image came back: "+esc(a.note||a.status||"unknown");
+      html='<div class="gatebox2"><div class="tx"><h4>🖼️ '+msg+'</h4><p>'+esc(a.note||"")+'</p></div></div>';states.images="fail";
+    }else{html+=aprInline(firstApr,"images");states.images="done"}
+    document.getElementById("panel-images").innerHTML=html;
+  }catch(e){document.getElementById("panel-images").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.images="fail"}
+  drawProg(states);refreshBadge();
 }
 
+/* inline approve box (shown right under creative/images) */
+function aprInline(aid,key){
+  if(!aid)return"";
+  return '<div class="gatebox2" id="aprbox-'+key+'"><div class="tx"><h4>✋ Awaiting your approval</h4><p>Nothing is used in any ad until you decide.</p></div>'
+    +'<div class="acts"><button class="btn ok sm" onclick="decideInline(\''+aid+'\',\''+key+'\',\'approve\')">✓ Approve</button>'
+    +'<button class="btn bad sm" onclick="decideInline(\''+aid+'\',\''+key+'\',\'reject\')">✗ Reject</button></div></div>';
+}
+async function decideInline(aid,key,decision){
+  try{
+    const r=await api("/approvals/"+aid,{method:"POST",headers:hdrs(),body:JSON.stringify({decision,by:"client"})});
+    if(r.ok){
+      const box=document.getElementById("aprbox-"+key);
+      if(box)box.outerHTML=decision==="approve"
+        ?'<div class="gatebox2" style="background:var(--ok-soft);border-color:#bfe3cf"><div class="tx"><h4 style="color:var(--ok)">✓ Approved</h4><p style="color:var(--ok)">This is cleared for use in your campaign.</p></div></div>'
+        :'<div class="gatebox2" style="background:var(--bad-soft);border-color:#f1c3c0"><div class="tx"><h4 style="color:var(--bad)">✗ Rejected</h4><p style="color:var(--bad)">Discarded. Generate a new version anytime.</p></div></div>';
+      refreshBadge();
+    }
+  }catch(e){}
+}
+
+/* ============ tabs ============ */
 function showTab(which){
-  ["plan","creative","images"].forEach(t=>{
-    document.getElementById("tab-"+t).classList.toggle("active", which===t);
-    document.getElementById("panel-"+t).style.display = which===t ? "block" : "none";
+  ["plan","creative","images","approvals","pricing"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("active",which===t);
+    document.getElementById("panel-"+t).style.display=which===t?"block":"none";
   });
 }
 
-function profile(){
-  return {
-    name: document.getElementById("name").value.trim() || "My Business",
-    vertical: document.getElementById("vertical").value,
-    city: document.getElementById("city").value.trim(),
-    goal: document.getElementById("goal").value
-  };
+/* ============ approvals tab ============ */
+async function refreshBadge(){
+  try{const r=await api("/approvals",{headers:hdrs()});
+    if(r.ok){const n=r.approvals.filter(a=>a.status==="pending").length;
+      const b=document.getElementById("aprBadge");b.textContent=n;b.style.display=n?"":"none"}
+  }catch(e){}
 }
-
-function accessCode(){ return localStorage.getItem("beacon_access") || ""; }
-
-async function call(payload){
-  const headers = {"Content-Type":"application/json"};
-  const code = accessCode();
-  if(code) headers["X-Beacon-Access"] = code;
-  const r = await fetch(API + "/route", { method: "POST", headers, body: JSON.stringify(payload) });
-  if(r.status === 401){ localStorage.removeItem("beacon_access"); showGate(true); throw new Error("unauthorized"); }
-  return r.json();
-}
-
-function showGate(force){
-  document.getElementById("gateOverlay").style.display = force ? "flex" : "none";
-}
-function submitGate(){
-  const v = document.getElementById("gateInput").value.trim();
-  if(v){ localStorage.setItem("beacon_access", v); showGate(false); }
-}
-
-async function runPlan(){
-  const p = profile();
-  showTab("plan");
-  const btn = document.getElementById("planBtn");
-  btn.disabled = true; const label = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner"></span>Beacon is thinking…';
-  document.getElementById("panel-plan").innerHTML = '<div class="placeholder"><span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span><h3 style="margin-top:14px">Planning your campaign…</h3><p>Claude Opus 4.8 is building a strategy for '+esc(p.name)+'.</p></div>';
-  try {
-    const res = await call({ capability:"plan_campaign", requester:"human",
-      payload:{ firm:{ vertical:p.vertical, city:p.city, name:p.name }, goal:p.goal } });
-    if(!res.ok){ document.getElementById("panel-plan").innerHTML = '<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"Something went wrong")+'</div>'; }
-    else { document.getElementById("panel-plan").innerHTML = '<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>'; }
-  } catch(e){ document.getElementById("panel-plan").innerHTML = '<div class="blocked">⚠️ Could not reach Beacon. Is the service running?</div>'; }
-  btn.disabled = false; btn.innerHTML = label;
-}
-
-async function runCreative(){
-  const p = profile();
-  showTab("creative");
-  const btn = document.getElementById("creativeBtn");
-  btn.disabled = true; const label = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span>Drafting…';
-  document.getElementById("panel-creative").innerHTML = '<div class="placeholder"><span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span><h3 style="margin-top:14px">Drafting ad concepts…</h3></div>';
-  try {
-    const res = await call({ capability:"make_creative", requester:"planner",
-      payload:{ brief:"trust + local "+p.vertical+", clear CTA for "+p.name, vertical:p.vertical, jurisdiction:"US" } });
-    if(!res.ok){ document.getElementById("panel-creative").innerHTML = '<div class="blocked">🛡️ Blocked by Sentinel: '+esc(res.blocked_reason||res.error||"")+'</div>'; }
-    else {
-      let html = "";
-      (res.data.variants||[]).forEach(v=>{
-        const eng = (v.video&&v.video.engine) ? v.video.engine : "—";
-        html += '<div class="variant"><div><span class="v-id">Variant '+esc(v.id)+'</span></div>'
-          + '<div class="concept doc">'+renderMarkdown(String(v.concept||""))+'</div>'
-          + '<div class="media">'
-          +   '<div class="frame"><div class="frame-ic">🎬</div><div class="frame-t">Video — concept only</div>'
-          +     '<div class="frame-s">Ready to render with <b>'+esc(eng)+'</b> once a generation engine is connected.</div></div>'
-          +   '<div class="frame"><div class="frame-ic">🖼️</div><div class="frame-t">Image — concept only</div>'
-          +     '<div class="frame-s">Ready to render with <b>'+esc(v.image||"—")+'</b> once a generation engine is connected.</div></div>'
-          + '</div>'
-          + (v.ai_disclosure ? '<span class="chip ok">⚖️ AI disclosure attached</span>' : '')
-          + '</div>';
-      });
-      if(res.gate_required==="client"){
-        html += '<div class="gate"><div class="icn">✋</div><div><h4>Awaiting your approval</h4><p>These concepts are ready but won\'t be used until you accept them. That\'s by design — you stay in control.</p></div></div>';
+async function loadApprovals(){
+  const p=document.getElementById("panel-approvals");
+  p.innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  try{
+    const r=await api("/approvals",{headers:hdrs()});
+    if(!r.ok){p.innerHTML='<div class="blocked">Could not load approvals.</div>';return}
+    if(!r.approvals.length){p.innerHTML='<div class="empty"><svg class="lh"><use href="#lighthouse"/></svg><h3>Nothing waiting</h3><p>Items needing your sign-off appear here.</p></div>';return}
+    let h="";
+    r.approvals.forEach(a=>{
+      let thumb="";
+      if(a.kind==="generate_media"&&a.data&&a.data.assets){
+        const img=a.data.assets.find(x=>x.kind==="image"&&x.data_url);
+        if(img)thumb='<img class="thumb" src="'+img.data_url+'"/>';
       }
-      (res.notes||[]).forEach(n=>{ /* notes available if needed */ });
-      document.getElementById("panel-creative").innerHTML = html;
-    }
-  } catch(e){ document.getElementById("panel-creative").innerHTML = '<div class="blocked">⚠️ Could not reach Beacon. Is the service running?</div>'; }
-  btn.disabled = false; btn.innerHTML = label;
+      const when=new Date(a.created_at*1000).toLocaleString();
+      h+='<div class="apr">'+thumb+'<div class="info"><div class="kind">'+esc(a.kind.replace("_"," "))+'</div><div class="lbl">'+esc(a.label)+'</div><div class="tm">'+when+'</div></div>'
+        +'<div class="acts">'+(a.status==="pending"
+          ?'<button class="btn ok sm" onclick="decideRow(\''+a.id+'\',\'approve\')">✓ Approve</button><button class="btn bad sm" onclick="decideRow(\''+a.id+'\',\'reject\')">✗ Reject</button>'
+          :'<span class="st '+a.status+'">'+a.status.toUpperCase()+'</span>')
+        +'</div></div>';
+    });
+    p.innerHTML=h;
+  }catch(e){p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
+}
+async function decideRow(aid,decision){
+  try{await api("/approvals/"+aid,{method:"POST",headers:hdrs(),body:JSON.stringify({decision,by:"client"})});loadApprovals();refreshBadge()}catch(e){}
 }
 
-async function runImages(){
-  const p = profile();
-  showTab("images");
-  const btn = document.getElementById("imagesBtn");
-  btn.disabled = true; const label = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span>Rendering…';
-  document.getElementById("panel-images").innerHTML = '<div class="placeholder"><span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span><h3 style="margin-top:14px">Rendering ad images…</h3><p>Nano Banana is creating images for '+esc(p.name)+'.</p></div>';
-  const prompt = "Professional, photorealistic advertising image for "+p.name+", a "+p.vertical
-    + " business in "+(p.city||"town")+". Warm, trustworthy, high quality, clean composition, "
-    + "space for ad text. No watermarks.";
-  try {
-    const res = await call({ capability:"generate_media", requester:"planner",
-      payload:{ prompt, media_type:"image", jurisdiction:"US" } });
-    if(!res.ok){ document.getElementById("panel-images").innerHTML = '<div class="blocked">🛡️ '+esc(res.blocked_reason||res.error||"")+'</div>'; }
-    else {
-      const assets = (res.data.assets||[]).filter(a=>a.kind==="image");
-      let html = "", rendered = 0;
-      html += '<div class="imggrid">';
-      assets.forEach(a=>{
-        if(a.status==="rendered" && a.data_url){
-          rendered++;
-          html += '<div class="imgcard"><img src="'+a.data_url+'" alt="ad image"/>'
-            + (res.data.ai_disclosure ? '<div class="imgtag">⚖️ AI-generated</div>' : '') + '</div>';
-        }
-      });
-      html += '</div>';
-      if(rendered===0){
-        const note = (assets[0] && (assets[0].note||assets[0].status)) || "No image returned.";
-        let msg = note, hint = "";
-        if(assets[0] && assets[0].status==="no_provider_configured"){ msg = "Image generation isn't switched on yet."; hint = "Connect a Google AI Studio key to enable it."; }
-        else if(assets[0] && assets[0].status==="no_api_key"){ msg = "No image API key set."; hint = "Add your Google AI Studio key to turn this on."; }
-        html = '<div class="gate"><div class="icn">🖼️</div><div><h4>'+esc(msg)+'</h4><p>'+esc(hint||note)+'</p></div></div>';
-      } else if(res.gate_required==="client"){
-        html += '<div class="gate"><div class="icn">✋</div><div><h4>Awaiting your approval</h4><p>These images won\'t be used in any ad until you accept them.</p></div></div>';
-      }
-      document.getElementById("panel-images").innerHTML = html;
-    }
-  } catch(e){ document.getElementById("panel-images").innerHTML = '<div class="blocked">⚠️ Could not reach Beacon. Is the service running?</div>'; }
-  btn.disabled = false; btn.innerHTML = label;
+/* ============ pricing tab ============ */
+async function loadPricing(){
+  const p=document.getElementById("panel-pricing");
+  p.innerHTML='<div class="empty"><span class="spinner"></span></div>';
+  try{
+    const r=await api("/pricing");
+    if(!r.ok){p.innerHTML='<div class="blocked">Could not load pricing.</div>';return}
+    let h='<div class="pnote"><h3>Honest, cost-plus pricing</h3><p>'+esc(r.note)+'</p></div><div class="pgrid">';
+    h+='<div class="pcard hl"><div class="nm">'+esc(r.bundle.label)+'</div><div class="ds">'+esc(r.bundle.desc)+'</div><div class="pr">$'+r.bundle.price.toFixed(2)+'</div><div class="un">'+esc(r.bundle.unit)+'</div><div class="cb">our cost $'+r.bundle.our_cost.toFixed(2)+' + '+r.markup_percent+'%</div></div>';
+    r.items.forEach(it=>{
+      h+='<div class="pcard"><div class="nm">'+esc(it.label)+'</div><div class="ds">'+esc(it.desc)+'</div><div class="pr">$'+it.price.toFixed(2)+'</div><div class="un">'+esc(it.unit)+'</div><div class="cb">our cost $'+it.our_cost.toFixed(2)+' + '+r.markup_percent+'%</div></div>';
+    });
+    h+='</div>';
+    p.innerHTML=h;
+  }catch(e){p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
 }
 
-// health check -> status pill + access gate
+/* ============ boot ============ */
 (async function(){
-  try {
-    const r = await fetch(API + "/healthz"); const j = await r.json();
-    const pill = document.getElementById("statusPill");
-    if(j.ok){ pill.innerHTML = '<span class="dot"></span> Live &middot; secure mode'; }
-    document.getElementById("mode").textContent = j.dry_run ? "dry-run safe mode (no auto-publishing)" : "live publishing enabled";
-    if(j.auth_required && !accessCode()){ showGate(true); }
-  } catch(e){
-    document.getElementById("statusPill").innerHTML = '<span class="dot" style="background:#d35;box-shadow:none"></span> Offline';
-  }
+  drawStep();
+  try{
+    const r=await fetch("/healthz");const j=await r.json();
+    if(j.ok)document.getElementById("statusPill").innerHTML='<span class="dot"></span> Live · secure mode';
+    document.getElementById("mode").textContent=j.dry_run?"safe mode — no auto-publishing":"live publishing enabled";
+    if(j.auth_required&&!accessCode())showGate(true);
+  }catch(e){document.getElementById("statusPill").innerHTML='<span class="dot" style="background:#d35;box-shadow:none"></span> Offline'}
 })();
 </script>
 </body>
