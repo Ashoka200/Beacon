@@ -17,3 +17,7 @@ services:
         value: "20"
       - key: BEACON_RATE_WINDOW
         value: "600"
+      - key: BEACON_IMAGE_PROVIDER     # "gemini" to enable Nano Banana image generation
+        value: "gemini"
+      - key: BEACON_IMAGE_API_KEY      # your Google AI Studio key
+        sync: false

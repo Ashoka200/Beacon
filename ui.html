@@ -144,6 +144,12 @@
   .chip.ok { background: #e7f4ec; color: var(--ok); }
   .chip.eng { background: #eef2f7; color: var(--navy-700); }
 
+  .imggrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 560px){ .imggrid { grid-template-columns: 1fr; } }
+  .imgcard { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .imgcard img { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
+  .imgtag { position: absolute; bottom: 8px; left: 8px; background: rgba(15,37,64,.82); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+
   .gate {
     display: flex; gap: 12px; align-items: flex-start; background: #fff7e9; border: 1px solid var(--gold-soft);
     border-radius: 11px; padding: 14px 16px; margin-top: 4px;
@@ -242,6 +248,7 @@
 
       <button class="btn" id="planBtn" onclick="runPlan()">✨ Generate campaign plan</button>
       <button class="btn ghost" id="creativeBtn" onclick="runCreative()">🎬 Draft ad creative</button>
+      <button class="btn ghost" id="imagesBtn" onclick="runImages()">🖼️ Generate images</button>
     </div>
   </div>
 
@@ -250,6 +257,7 @@
     <div class="tabs">
       <button class="tab active" id="tab-plan" onclick="showTab('plan')">Campaign plan</button>
       <button class="tab" id="tab-creative" onclick="showTab('creative')">Ad creative</button>
+      <button class="tab" id="tab-images" onclick="showTab('images')">Images</button>
     </div>
 
     <div class="panel" id="panel-plan">
@@ -265,6 +273,14 @@
         <svg class="lh" style="color:var(--navy)"><use href="#lighthouse"/></svg>
         <h3>Ad concepts will appear here</h3>
         <p>Click <b>Draft ad creative</b> to see variants — each held for your approval.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-images" style="display:none">
+      <div class="placeholder" id="ph-images">
+        <svg class="lh" style="color:var(--navy)"><use href="#lighthouse"/></svg>
+        <h3>Generated images will appear here</h3>
+        <p>Click <b>Generate images</b> to render real ad images with AI — each held for your approval.</p>
       </div>
     </div>
   </div>
@@ -336,10 +352,10 @@ function renderMarkdown(md){
 }
 
 function showTab(which){
-  document.getElementById("tab-plan").classList.toggle("active", which==="plan");
-  document.getElementById("tab-creative").classList.toggle("active", which==="creative");
-  document.getElementById("panel-plan").style.display = which==="plan" ? "block" : "none";
-  document.getElementById("panel-creative").style.display = which==="creative" ? "block" : "none";
+  ["plan","creative","images"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("active", which===t);
+    document.getElementById("panel-"+t).style.display = which===t ? "block" : "none";
+  });
 }
 
 function profile(){
@@ -419,6 +435,47 @@ async function runCreative(){
       document.getElementById("panel-creative").innerHTML = html;
     }
   } catch(e){ document.getElementById("panel-creative").innerHTML = '<div class="blocked">⚠️ Could not reach Beacon. Is the service running?</div>'; }
+  btn.disabled = false; btn.innerHTML = label;
+}
+
+async function runImages(){
+  const p = profile();
+  showTab("images");
+  const btn = document.getElementById("imagesBtn");
+  btn.disabled = true; const label = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span>Rendering…';
+  document.getElementById("panel-images").innerHTML = '<div class="placeholder"><span class="spinner" style="border-color:rgba(15,37,64,.2);border-top-color:var(--navy)"></span><h3 style="margin-top:14px">Rendering ad images…</h3><p>Nano Banana is creating images for '+esc(p.name)+'.</p></div>';
+  const prompt = "Professional, photorealistic advertising image for "+p.name+", a "+p.vertical
+    + " business in "+(p.city||"town")+". Warm, trustworthy, high quality, clean composition, "
+    + "space for ad text. No watermarks.";
+  try {
+    const res = await call({ capability:"generate_media", requester:"planner",
+      payload:{ prompt, media_type:"image", jurisdiction:"US" } });
+    if(!res.ok){ document.getElementById("panel-images").innerHTML = '<div class="blocked">🛡️ '+esc(res.blocked_reason||res.error||"")+'</div>'; }
+    else {
+      const assets = (res.data.assets||[]).filter(a=>a.kind==="image");
+      let html = "", rendered = 0;
+      html += '<div class="imggrid">';
+      assets.forEach(a=>{
+        if(a.status==="rendered" && a.data_url){
+          rendered++;
+          html += '<div class="imgcard"><img src="'+a.data_url+'" alt="ad image"/>'
+            + (res.data.ai_disclosure ? '<div class="imgtag">⚖️ AI-generated</div>' : '') + '</div>';
+        }
+      });
+      html += '</div>';
+      if(rendered===0){
+        const note = (assets[0] && (assets[0].note||assets[0].status)) || "No image returned.";
+        let msg = note, hint = "";
+        if(assets[0] && assets[0].status==="no_provider_configured"){ msg = "Image generation isn't switched on yet."; hint = "Connect a Google AI Studio key to enable it."; }
+        else if(assets[0] && assets[0].status==="no_api_key"){ msg = "No image API key set."; hint = "Add your Google AI Studio key to turn this on."; }
+        html = '<div class="gate"><div class="icn">🖼️</div><div><h4>'+esc(msg)+'</h4><p>'+esc(hint||note)+'</p></div></div>';
+      } else if(res.gate_required==="client"){
+        html += '<div class="gate"><div class="icn">✋</div><div><h4>Awaiting your approval</h4><p>These images won\'t be used in any ad until you accept them.</p></div></div>';
+      }
+      document.getElementById("panel-images").innerHTML = html;
+    }
+  } catch(e){ document.getElementById("panel-images").innerHTML = '<div class="blocked">⚠️ Could not reach Beacon. Is the service running?</div>'; }
   btn.disabled = false; btn.innerHTML = label;
 }
 

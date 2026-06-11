@@ -11,12 +11,15 @@ Flip a provider on by setting its env vars and implementing the one marked
 call below — the rest of the mesh (routing, gating, screening) is unchanged.
 """
 from __future__ import annotations
-import os
+import os, base64
 from base import Agent
 from contracts import Capability, AgentRequest, AgentResponse
 
 IMAGE_PROVIDER = os.environ.get("BEACON_IMAGE_PROVIDER", "").strip().lower()
 VIDEO_PROVIDER = os.environ.get("BEACON_VIDEO_PROVIDER", "").strip().lower()
+IMAGE_API_KEY = (os.environ.get("BEACON_IMAGE_API_KEY")
+                 or os.environ.get("GEMINI_API_KEY") or "").strip()
+GEMINI_IMAGE_MODEL = os.environ.get("BEACON_GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 
 
 class MediaStudio(Agent):
@@ -29,10 +32,33 @@ class MediaStudio(Agent):
             return {"kind": "image", "status": "no_provider_configured",
                     "note": "Set BEACON_IMAGE_PROVIDER + BEACON_IMAGE_API_KEY to render real images.",
                     "prompt": prompt}
-        # --- INTEGRATION SEAM: call the chosen image API here ------------
-        # e.g. Gemini/Imagen, OpenAI Images, Stability. Return a real URL.
-        return {"kind": "image", "status": "provider_seam_not_implemented",
+        if IMAGE_PROVIDER == "gemini":
+            return self._gemini_image(prompt)
+        return {"kind": "image", "status": "unknown_provider",
                 "provider": IMAGE_PROVIDER, "prompt": prompt}
+
+    def _gemini_image(self, prompt: str) -> dict:
+        """Render with Google Gemini ('Nano Banana'). Returns an inline data URL."""
+        if not IMAGE_API_KEY:
+            return {"kind": "image", "status": "no_api_key",
+                    "note": "Set BEACON_IMAGE_API_KEY to your Google AI Studio key.", "prompt": prompt}
+        try:
+            from google import genai
+            client = genai.Client(api_key=IMAGE_API_KEY)
+            resp = client.models.generate_content(model=GEMINI_IMAGE_MODEL, contents=prompt)
+            for part in resp.parts:
+                if getattr(part, "inline_data", None) is not None:
+                    raw = part.inline_data.data
+                    mime = getattr(part.inline_data, "mime_type", "image/png")
+                    b64 = base64.b64encode(raw).decode() if isinstance(raw, (bytes, bytearray)) else raw
+                    return {"kind": "image", "status": "rendered", "provider": "gemini",
+                            "model": GEMINI_IMAGE_MODEL, "data_url": f"data:{mime};base64,{b64}",
+                            "prompt": prompt}
+            return {"kind": "image", "status": "no_image_returned",
+                    "note": "Model returned no image (it may have refused the prompt).", "prompt": prompt}
+        except Exception as e:  # never crash the mesh on a provider hiccup
+            return {"kind": "image", "status": "error", "provider": "gemini",
+                    "note": f"{type(e).__name__}: {e}", "prompt": prompt}
 
     def _generate_video(self, prompt: str) -> dict:
         if not VIDEO_PROVIDER:
