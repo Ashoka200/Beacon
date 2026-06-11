@@ -78,34 +78,54 @@ def _create_approval(kind: str, label: str, data: dict) -> str:
     return aid
 
 
-# --- transparent cost-plus pricing -------------------------------------------
-# Beacon's promise: you pay our actual AI cost plus a flat markup. Costs below
-# are the real per-action compute costs (Claude Opus 4.8 token pricing and
-# Gemini image pricing); MARKUP applies on top. Tune via env without a deploy.
-MARKUP = float(os.environ.get("BEACON_MARKUP", "1.40"))  # cost + 40%
+# --- pricing engine (all internals stay server-side) -------------------------
+# Clients only ever see clean retail prices. Internally every price has:
+#   1. a COST FLOOR  — real AI compute cost x MARKUP (default +40%), never sell below;
+#   2. a MARKET ANCHOR — value-based plan pricing typical for SMB marketing tools;
+#   3. a DEMAND FACTOR — live multiplier from the last 24h of billable usage, so
+#      rates rise automatically when the platform is busy and ease when quiet.
+MARKUP = float(os.environ.get("BEACON_MARKUP", "1.40"))                # internal floor only
+DEMAND_BASELINE = float(os.environ.get("BEACON_DEMAND_BASELINE", "40"))  # billable actions/day = normal
 
-# (input_tokens, output_tokens) typical per action; Opus 4.8: $5/M in, $25/M out
-_OPUS_IN, _OPUS_OUT = 5.0 / 1e6, 25.0 / 1e6
-_IMAGE_COST = 0.039  # Gemini 2.5 Flash Image, per image
-
-COST_BASIS = {
-    "campaign_plan":  {"label": "Campaign strategy & plan",
-                       "cost": round(3000 * _OPUS_IN + 6000 * _OPUS_OUT, 3),
-                       "unit": "per campaign",
-                       "desc": "Full strategy: audience, channels, budget split, keywords."},
-    "ad_creative":    {"label": "Ad creative concepts (2 variants)",
-                       "cost": round(2000 * _OPUS_IN + 4000 * _OPUS_OUT, 3),
-                       "unit": "per brief",
-                       "desc": "Scripts, hooks, and angles for your ads — held for your approval."},
-    "ad_image":       {"label": "AI ad image",
-                       "cost": _IMAGE_COST,
-                       "unit": "per image",
-                       "desc": "Photorealistic ad image, AI-disclosure attached."},
+_OPUS_IN, _OPUS_OUT = 5.0 / 1e6, 25.0 / 1e6   # Claude Opus 4.8 $/token
+_IMG_COST = 0.039                              # Gemini image $/render
+_COST = {  # internal AI cost basis — never exposed via the API
+    "plan":     3000 * _OPUS_IN + 6000 * _OPUS_OUT,
+    "creative": 2000 * _OPUS_IN + 4000 * _OPUS_OUT,
+    "image":    _IMG_COST,
 }
+_BUNDLE_COST = _COST["plan"] + _COST["creative"] + 4 * _COST["image"]
+
+_demand_events: list[float] = []
+_demand_lock = threading.Lock()
 
 
-def _price(cost: float) -> float:
-    return math.ceil(cost * MARKUP * 100) / 100  # round up to the cent
+def _record_demand() -> None:
+    with _demand_lock:
+        _demand_events.append(time.time())
+        if len(_demand_events) > 5000:
+            del _demand_events[:2500]
+
+
+def _demand_factor() -> float:
+    """0.90 (quiet) .. 1.40 (very busy), from billable actions in the last 24h."""
+    now = time.time()
+    with _demand_lock:
+        _demand_events[:] = [t for t in _demand_events if now - t < 86400]
+        load = len(_demand_events) / max(DEMAND_BASELINE, 1.0)
+    return max(0.90, min(1.40, 0.90 + 0.25 * load))
+
+
+def _pretty(p: float) -> float:
+    """Attractive retail endings: $0.95-style under a dollar, $X.99 above."""
+    if p < 1:
+        return math.ceil(p * 20) / 20
+    return math.ceil(p) - 0.01
+
+
+def _retail(anchor: float, cost: float = 0.0) -> float:
+    """Demand-scaled market price, floored at cost x MARKUP."""
+    return _pretty(max(anchor * _demand_factor(), cost * MARKUP))
 
 
 app = FastAPI(title="Beacon", description="Get seen. Stay trusted.")
@@ -146,6 +166,11 @@ def route(body: RouteIn, request: Request):
         return {"ok": False, "error": f"unknown capability '{body.capability}'",
                 "valid": [c.value for c in Capability]}
     resp = ORCH.route(AgentRequest(cap, body.payload, requester=body.requester))
+
+    # billable usage feeds the demand-based pricing engine
+    if resp.ok and cap in (Capability.PLAN_CAMPAIGN, Capability.MAKE_CREATIVE,
+                           Capability.GENERATE_MEDIA):
+        _record_demand()
 
     # park client-gated artifacts in the approval queue so a human can decide
     approval_id = ""
@@ -195,23 +220,44 @@ def decide(aid: str, body: DecisionIn, request: Request):
 
 @app.get("/pricing")
 def pricing():
-    items = []
-    for key, c in COST_BASIS.items():
-        items.append({"key": key, "label": c["label"], "desc": c["desc"],
-                      "unit": c["unit"], "our_cost": c["cost"], "price": _price(c["cost"])})
-    bundle_cost = (COST_BASIS["campaign_plan"]["cost"]
-                   + COST_BASIS["ad_creative"]["cost"]
-                   + 4 * COST_BASIS["ad_image"]["cost"])
-    bundle = {"key": "launch_bundle", "label": "Campaign Launch Bundle",
-              "desc": "Strategy + creative concepts + 4 ad images. Everything to launch one campaign.",
-              "unit": "per campaign", "our_cost": round(bundle_cost, 3),
-              "price": _price(bundle_cost)}
-    return {"ok": True, "model": "transparent cost-plus",
-            "markup_percent": round((MARKUP - 1) * 100),
-            "note": ("You pay our actual AI compute cost plus a flat "
-                     f"{round((MARKUP - 1) * 100)}% — that's it. Ad spend (Google/Meta) "
-                     "is billed by the platforms directly at cost, never marked up."),
-            "items": items, "bundle": bundle}
+    """Client-facing price list. Retail numbers only — cost basis, markup, and
+    the demand factor are internal. Rates refresh on every call."""
+    launch = _retail(12, _BUNDLE_COST)
+    plans = [
+        {"key": "starter", "label": "Starter", "price": _retail(29),
+         "cadence": "per month", "popular": False,
+         "tagline": "Get on the map",
+         "features": ["2 AI campaigns per month", "10 ad images", "1 advertising channel",
+                      "Campaign approval workflow", "Email support"]},
+        {"key": "growth", "label": "Growth", "price": _retail(79),
+         "cadence": "per month", "popular": True,
+         "tagline": "Our most popular plan",
+         "features": ["6 AI campaigns per month", "40 ad images", "Video ad concepts",
+                      "Up to 3 advertising channels", "A/B creative variants",
+                      "Priority support"]},
+        {"key": "pro", "label": "Pro", "price": _retail(199),
+         "cadence": "per month", "popular": False,
+         "tagline": "For multi-location & franchises",
+         "features": ["Unlimited campaigns (fair use)", "120 ad images",
+                      "All advertising channels", "Multi-location support",
+                      "Quarterly strategy review", "Priority support"]},
+    ]
+    bundles = [
+        {"key": "launch", "label": "Campaign Launch Bundle", "price": launch,
+         "unit": "one-time",
+         "desc": "Strategy + ad creative + 4 ad images. Everything to launch one campaign."},
+        {"key": "content", "label": "Content Pack", "price": _retail(15, 12 * _COST["image"]),
+         "unit": "one-time", "desc": "12 fresh ad images for your channels."},
+        {"key": "boost", "label": "Brand Boost", "price": _retail(25, _COST["plan"] + 2 * _COST["creative"] + 8 * _COST["image"]),
+         "unit": "one-time", "desc": "Strategy + 2 creative briefs + 8 ad images."},
+    ]
+    intro = {"key": "first_campaign_free", "label": "Your first campaign is free",
+             "desc": ("New to Beacon? Your first Campaign Launch Bundle is on us — "
+                      "see the full strategy, ad creative, and images before you spend a dollar."),
+             "price": 0.0, "regular": launch}
+    return {"ok": True, "currency": "USD",
+            "rates_note": "Rates adjust automatically with platform demand.",
+            "intro": intro, "plans": plans, "bundles": bundles}
 
 
 @app.get("/pending")
