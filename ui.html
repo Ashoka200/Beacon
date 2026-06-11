@@ -129,7 +129,16 @@
   /* creative variants */
   .variant { border: 1px solid var(--line); border-radius: 11px; padding: 16px; margin-bottom: 14px; background: #fcfbf8; }
   .variant .v-id { display: inline-block; background: var(--navy); color: #fff; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 2px 9px; margin-right: 8px; }
-  .variant .concept { margin: 8px 0; font-size: 14.5px; }
+  .variant .concept { margin: 8px 0 14px; font-size: 14px; max-height: 320px; overflow-y: auto; padding-right: 8px; border-left: 3px solid var(--gold-soft); padding-left: 14px; }
+  .variant .concept h2 { font-size: 15px; margin: 14px 0 6px; }
+  .variant .concept h3 { font-size: 13.5px; }
+  .media { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 10px; }
+  @media (max-width: 560px){ .media { grid-template-columns: 1fr; } }
+  .frame { border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; background: repeating-linear-gradient(45deg,#fbfaf6,#fbfaf6 10px,#f6f4ee 10px,#f6f4ee 20px); }
+  .frame-ic { font-size: 26px; opacity: .55; }
+  .frame-t { font-size: 12.5px; font-weight: 700; color: var(--navy); margin-top: 4px; }
+  .frame-s { font-size: 11.5px; color: var(--slate); margin-top: 3px; line-height: 1.4; }
+  .frame-s b { color: var(--navy-700); }
   .meta { font-size: 12.5px; color: var(--slate); }
   .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 3px 10px; margin: 3px 5px 0 0; }
   .chip.ok { background: #e7f4ec; color: var(--ok); }
@@ -393,9 +402,13 @@ async function runCreative(){
       (res.data.variants||[]).forEach(v=>{
         const eng = (v.video&&v.video.engine) ? v.video.engine : "—";
         html += '<div class="variant"><div><span class="v-id">Variant '+esc(v.id)+'</span></div>'
-          + '<div class="concept">'+esc(v.concept||"")+'</div>'
-          + '<span class="chip eng">🎥 '+esc(eng)+'</span>'
-          + '<span class="chip eng">🖼️ '+esc(v.image||"")+'</span>'
+          + '<div class="concept doc">'+renderMarkdown(String(v.concept||""))+'</div>'
+          + '<div class="media">'
+          +   '<div class="frame"><div class="frame-ic">🎬</div><div class="frame-t">Video — concept only</div>'
+          +     '<div class="frame-s">Ready to render with <b>'+esc(eng)+'</b> once a generation engine is connected.</div></div>'
+          +   '<div class="frame"><div class="frame-ic">🖼️</div><div class="frame-t">Image — concept only</div>'
+          +     '<div class="frame-s">Ready to render with <b>'+esc(v.image||"—")+'</b> once a generation engine is connected.</div></div>'
+          + '</div>'
           + (v.ai_disclosure ? '<span class="chip ok">⚖️ AI disclosure attached</span>' : '')
           + '</div>';
       });
