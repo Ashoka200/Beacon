@@ -60,8 +60,11 @@ class Orchestrator:
             self._log(f"[{tid}] DENY {req.requester} -> {req.capability.value} (least-privilege)")
             return AgentResponse(False, blocked_reason="not permitted for requester")
 
-        # Sentinel screens content crossing the mesh
-        blob = " ".join(str(v) for v in req.payload.values())
+        # Sentinel screens content crossing the mesh (binary data URLs — e.g.
+        # client photo uploads — are exempt from TEXT screening; the media
+        # agent validates and size-caps them separately)
+        blob = " ".join(str(v) for v in req.payload.values()
+                        if not (isinstance(v, str) and v.startswith("data:")))
         v = sentinel.screen(blob)
         if not v.allow:
             self._log(f"[{tid}] SENTINEL BLOCK {req.capability.value}: {v.reasons}")

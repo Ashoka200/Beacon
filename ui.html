@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Beacon — Get seen. Stay trusted.</title>
+<title>Beacon — Your AI Marketing Team</title>
 <style>
   :root{
     --navy:#0f2540; --navy-700:#16335a; --navy-50:#eef2f8;
@@ -29,10 +29,10 @@
   .pill{font-size:12px;color:var(--slate);border:1px solid var(--line);border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:7px;background:#fff}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(30,142,90,.18)}
 
-  .wizwrap{max-width:760px;margin:0 auto;padding:36px 20px 60px}
+  .wizwrap{max-width:760px;margin:0 auto;padding:36px 20px 50px}
   .wizhead{text-align:center;margin-bottom:26px}
-  .wizhead h1{font-family:Georgia,serif;font-size:30px;color:var(--navy);margin:0 0 6px}
-  .wizhead p{color:var(--slate);margin:0;font-size:15px}
+  .wizhead h1{font-family:Georgia,serif;font-size:30px;color:var(--navy);margin:0 0 8px}
+  .wizhead p{color:var(--slate);margin:0;font-size:15px;max-width:560px;margin:0 auto}
 
   .stepper{display:flex;align-items:center;justify-content:center;margin:26px 0 30px}
   .stp{display:flex;align-items:center;gap:9px}
@@ -65,7 +65,7 @@
   .choice{border:1.5px solid var(--line);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;background:#fff;transition:all .15s;user-select:none;position:relative}
   .choice .ic{font-size:21px}
   .choice .lb{font-size:13px;font-weight:600;color:var(--ink);margin-top:5px}
-  .choice .sb{font-size:11px;color:var(--slate);margin-top:2px}
+  .choice .sb{font-size:10.5px;color:var(--slate);margin-top:2px;line-height:1.35}
   .choice:hover{border-color:#b9c4d4}
   .choice.sel{border-color:var(--navy);background:var(--navy-50);box-shadow:0 0 0 1px var(--navy)}
   .choice.sel::after{content:"✓";position:absolute;top:7px;right:9px;color:var(--ok);font-weight:800;font-size:13px}
@@ -73,6 +73,23 @@
   .chp{border:1.5px solid var(--line);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;background:#fff;transition:all .12s;user-select:none}
   .chp:hover{border-color:#b9c4d4}
   .chp.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  .delivrow{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);border-radius:12px;padding:13px 16px;margin-bottom:10px;background:#fff;gap:10px;flex-wrap:wrap}
+  .delivrow.on{border-color:var(--navy);background:var(--navy-50)}
+  .delivrow .dl{display:flex;align-items:center;gap:11px}
+  .delivrow .dt{font-size:14px;font-weight:700;color:var(--navy)}
+  .delivrow .dd{font-size:12px;color:var(--slate)}
+  .delivrow .dprice{font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap}
+  .switch{position:relative;width:42px;height:24px;flex:none}
+  .switch input{display:none}
+  .switch .tr{position:absolute;inset:0;background:#cdd5e0;border-radius:999px;transition:.18s;cursor:pointer}
+  .switch .tr::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.18s;box-shadow:var(--sh-1)}
+  .switch input:checked + .tr{background:var(--ok)}
+  .switch input:checked + .tr::after{left:21px}
+  .switch input:disabled + .tr{opacity:.55;cursor:not-allowed}
+  .qtyrow{display:flex;align-items:center;gap:8px}
+  .qty{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;background:#fff;cursor:pointer}
+  .qty.sel{background:var(--navy);border-color:var(--navy);color:#fff}
 
   .slwrap{margin:4px 2px 20px}
   .slhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
@@ -104,11 +121,11 @@
   .rvi .v{font-size:14.5px;color:var(--ink);font-weight:600;margin-top:2px}
   .pricebox{background:linear-gradient(135deg,#fff8ec,#fdf3e0);border:1.5px solid var(--gold-soft);border-radius:13px;padding:16px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .pricebox .l .t{font-size:15px;font-weight:800;color:var(--navy)}
-  .pricebox .l .s{font-size:12px;color:var(--gold-deep)}
+  .pricebox .l .s{font-size:12px;color:var(--gold-deep);max-width:430px}
   .pricebox .amount{font-size:27px;font-weight:800;color:var(--navy)}
   .pricebox .amount .was{font-size:14px;color:var(--slate);text-decoration:line-through;font-weight:600;margin-right:8px}
 
-  .wswrap{max-width:1140px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:270px 1fr;gap:20px;align-items:start}
+  .wswrap{max-width:1140px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
   @media(max-width:900px){.wswrap{grid-template-columns:1fr}}
   .rail{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:18px;position:sticky;top:74px}
   @media(max-width:900px){.rail{position:static}}
@@ -120,6 +137,8 @@
   .pstep.done{color:var(--ink)}
   .pstep.done .ic{background:var(--ok);border-color:var(--ok);color:#fff}
   .pstep.fail .ic{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+  .launchbox{margin:14px 0;padding:13px 14px;border-radius:11px;background:var(--ok-soft);border:1px solid #bfe3cf;font-size:12.5px;color:var(--ok);display:none}
+  .launchbox b{display:block;font-size:13px;margin-bottom:2px}
 
   .ws{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);min-height:480px;overflow:hidden}
   .tabs{display:flex;gap:2px;padding:10px 14px 0;border-bottom:1px solid var(--line);overflow-x:auto}
@@ -128,6 +147,15 @@
   .tab .bdg{background:var(--gold);color:var(--navy);font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:18px}
   .panel{padding:24px 28px 30px;animation:rise .25s ease}
   @media(max-width:640px){.panel{padding:18px 14px}}
+
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:16px}
+  .toolbar .tl{font-size:12.5px;font-weight:700;color:var(--slate);margin-right:2px}
+  .toolbar input[type=text]{flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;outline:none}
+  .upbtn{border:1.5px dashed #b9c4d4;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--navy);background:#fff;cursor:pointer}
+  .upbtn:hover{border-color:var(--navy)}
+  .refchip{display:inline-flex;align-items:center;gap:7px;background:var(--navy-50);border:1px solid var(--navy);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--navy)}
+  .refchip img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+  .refchip .x{cursor:pointer;font-weight:800}
 
   .empty{color:var(--slate);text-align:center;padding:60px 24px}
   .empty .lh{width:52px;height:52px;opacity:.45;margin-bottom:12px;color:var(--navy)}
@@ -173,7 +201,6 @@
   .st.approved{background:var(--ok-soft);color:var(--ok)}
   .st.rejected{background:var(--bad-soft);color:var(--bad)}
 
-  /* pricing page */
   .offerban{background:linear-gradient(120deg,var(--navy),var(--navy-700));border-radius:15px;color:#fff;padding:22px 26px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
   .offerban .l h3{margin:0 0 4px;font-size:18px;font-family:Georgia,serif}
   .offerban .l p{margin:0;font-size:13px;color:#cdd8e6;max-width:520px}
@@ -199,20 +226,33 @@
   .bcard .un{font-size:11px;color:var(--slate)}
   .ratesnote{font-size:11.5px;color:var(--slate);margin-top:14px;text-align:center}
 
-  .truststrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+  .quotes{max-width:980px;margin:8px auto 0;padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:880px){.quotes{grid-template-columns:1fr}}
+  .q{background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:18px 20px}
+  .q p{margin:0;font-family:Georgia,serif;font-size:15px;color:var(--navy);font-style:italic;line-height:1.55}
+  .q .who{font-size:11.5px;color:var(--slate);margin-top:9px;font-style:normal;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+
+  .truststrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
   @media(max-width:880px){.truststrip{grid-template-columns:1fr 1fr}}
   .tc{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
   .tc .i{font-size:19px}.tc h4{margin:6px 0 3px;font-size:13px;color:var(--navy)}.tc p{margin:0;font-size:11.5px;color:var(--slate)}
   footer{text-align:center;color:var(--slate);font-size:12.5px;padding:24px;border-top:1px solid var(--line);margin-top:30px}
   footer b{color:var(--navy)}
+
   .overlay{display:none;position:fixed;inset:0;background:rgba(15,37,64,.55);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:24px}
-  .gbox{background:#fff;border-radius:16px;box-shadow:var(--sh-3);max-width:380px;width:100%;padding:30px 28px;text-align:center}
+  .gbox{background:#fff;border-radius:16px;box-shadow:var(--sh-3);max-width:400px;width:100%;padding:30px 28px;text-align:center}
   .gbox .lh{width:46px;height:46px;color:var(--navy);margin-bottom:10px}
   .gbox h3{font-family:Georgia,serif;font-size:21px;color:var(--navy);margin:0 0 6px}
   .gbox p{font-size:13.5px;color:var(--slate);margin:0 0 18px}
-  .gbox input{width:100%;text-align:center;letter-spacing:1px;padding:13px;font-size:15px;border:1.5px solid var(--line);border-radius:10px;outline:none}
+  .gbox input{width:100%;padding:13px;font-size:15px;border:1.5px solid var(--line);border-radius:10px;outline:none;margin-bottom:10px}
   .gbox input:focus{border-color:var(--navy);box-shadow:0 0 0 3.5px var(--navy-50)}
-  .gbox .btn{width:100%;margin-top:14px}
+  .gbox .btn{width:100%;margin-top:6px}
+  .gbox .close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;color:var(--slate);cursor:pointer}
+  .gbox{position:relative}
+
+  #toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:9px;align-items:center}
+  .toast{background:var(--navy);color:#fff;border-radius:11px;padding:12px 20px;font-size:13.5px;font-weight:600;box-shadow:var(--sh-3);animation:rise .25s ease;max-width:90vw}
+  .toast.ok{background:var(--ok)} .toast.bad{background:var(--bad)} .toast.gold{background:var(--gold);color:var(--navy)}
 </style>
 </head>
 <body>
@@ -231,7 +271,7 @@
   <div class="bar">
     <div class="brand" onclick="goWizard()">
       <svg class="mark"><use href="#lighthouse"/></svg>
-      <div><div class="name">Beacon</div><div class="tg">Get seen. Stay trusted.</div></div>
+      <div><div class="name">Beacon</div><div class="tg">Your AI marketing team</div></div>
     </div>
     <span class="pill" id="statusPill"><span class="dot"></span> Online</span>
   </div>
@@ -239,8 +279,8 @@
 
 <div class="wizwrap" id="wizard">
   <div class="wizhead">
-    <h1>Let's build your campaign</h1>
-    <p>A few quick questions — your marketing team handles the rest.</p>
+    <h1>Marketing that brings customers to your door</h1>
+    <p>Beacon plans your campaigns, writes your ads, and creates your visuals — and you approve every step before anything goes live.</p>
   </div>
   <div class="stepper" id="stepper"></div>
   <div class="wcard" id="wbody"></div>
@@ -250,8 +290,11 @@
   <div class="rail">
     <div class="bizname" id="railName">—</div>
     <div class="bizmeta" id="railMeta">—</div>
-    <div id="railProg" style="margin-bottom:16px"></div>
-    <button class="btn ghost sm" style="width:100%" onclick="goWizard()">← New campaign</button>
+    <div id="railProg" style="margin-bottom:8px"></div>
+    <div class="launchbox" id="launchBox"></div>
+    <button class="btn gold sm" style="width:100%;margin-bottom:8px" id="launchBtn" onclick="requestLaunch()">🚀 Launch campaign</button>
+    <button class="btn ghost sm" style="width:100%;margin-bottom:8px" onclick="editCampaign()">✎ Edit campaign details</button>
+    <button class="btn ghost sm" style="width:100%" onclick="startOver()">↺ Start a new campaign</button>
   </div>
   <div class="ws">
     <div class="tabs">
@@ -269,26 +312,54 @@
   </div>
 </div>
 
-<div class="wizwrap" style="padding-top:0" id="trustwrap">
+<div class="quotes" id="quoteband">
+  <div class="q"><p>“The best marketing doesn't feel like marketing.”</p><div class="who">— Tom Fishburne</div></div>
+  <div class="q"><p>“Good marketing makes the company look smart. Great marketing makes the customer feel smart.”</p><div class="who">— Joe Chernov</div></div>
+  <div class="q"><p>“Stopping advertising to save money is like stopping your watch to save time.”</p><div class="who">— Henry Ford</div></div>
+</div>
+
+<div class="wizwrap" style="padding-top:14px" id="trustwrap">
   <div class="truststrip">
-    <div class="tc"><div class="i">🔒</div><h4>You approve everything</h4><p>Nothing runs until you say so.</p></div>
+    <div class="tc"><div class="i">🔒</div><h4>You approve everything</h4><p>No ad runs without your sign-off.</p></div>
     <div class="tc"><div class="i">🛡️</div><h4>Protected platform</h4><p>Every input screened before use.</p></div>
-    <div class="tc"><div class="i">⚖️</div><h4>Compliance built in</h4><p>Regional ad rules enforced for you.</p></div>
-    <div class="tc"><div class="i">🎁</div><h4>First campaign free</h4><p>See the full result before you pay.</p></div>
+    <div class="tc"><div class="i">⚖️</div><h4>Compliance built in</h4><p>Regional ad rules handled for you.</p></div>
+    <div class="tc"><div class="i">🎁</div><h4>First campaign free</h4><p>We earn your trust before a dollar.</p></div>
   </div>
 </div>
 
-<footer><b>Beacon</b> · Get seen. Stay trusted. · © 2026 Beacon</footer>
+<footer><b>Beacon</b> · Your AI marketing team · © 2026 Beacon</footer>
 
 <div class="overlay" id="gateOverlay">
   <div class="gbox">
     <svg class="lh"><use href="#lighthouse"/></svg>
     <h3>Welcome to Beacon</h3>
     <p>Enter your access code to continue.</p>
-    <input id="gateInput" type="password" placeholder="Access code" onkeydown="if(event.key==='Enter')submitGate()"/>
+    <input id="gateInput" type="password" placeholder="Access code" style="text-align:center;letter-spacing:1px" onkeydown="if(event.key==='Enter')submitGate()"/>
     <button class="btn primary" onclick="submitGate()">Enter</button>
   </div>
 </div>
+
+<div class="overlay" id="planModal">
+  <div class="gbox">
+    <button class="close" onclick="closePlanModal()">×</button>
+    <svg class="lh"><use href="#lighthouse"/></svg>
+    <h3 id="pmTitle">Reserve your plan</h3>
+    <p id="pmDesc">Leave your details and we'll activate your plan within 1 business day. No charge today.</p>
+    <div id="pmForm">
+      <input id="pmName" placeholder="Your name"/>
+      <input id="pmEmail" type="email" placeholder="Email address"/>
+      <button class="btn gold" onclick="submitPlan()">Reserve my plan</button>
+    </div>
+    <div id="pmDone" style="display:none">
+      <p style="color:var(--ok);font-weight:700">✓ You're reserved!</p>
+      <p>We'll be in touch within 1 business day to activate your plan. Meanwhile, your first campaign is free — enjoy.</p>
+      <button class="btn primary" onclick="closePlanModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<input type="file" id="refFile" accept="image/*" style="display:none" onchange="onRefFile(this)"/>
 
 <script>
 /* ============ state ============ */
@@ -298,16 +369,23 @@ const S = {
   goals: ["direct bookings"], budget: 1500,
   areaMode: "local", radius: 15, regions: "",
   audiences: [], offer: "",
-  results: {}, approvalIds: {}, intro: null
+  deliver: { creative:true, images:true, qty:2 },
+  refImage: "",                 // client-uploaded photo (data URL)
+  approvalIds: {}, pricing: null, launchTicket: "",
+  stages: {}
 };
 const INDUSTRIES = [["hospitality","🏨","Hotel / Hospitality"],["dentist","🦷","Dental"],["salon","💇","Salon / Spa"],["accounting","🧾","Accounting"],["legal","⚖️","Legal"],["plumber","🔧","Home services"],["general","🏪","Other"]];
 const GOALS = [["direct bookings","🛎️","Direct bookings"],["calls","📞","Phone calls"],["bookings","📅","Appointments"],["foot traffic","🚶","Foot traffic"],["leads","📥","Online leads"],["brand awareness","📣","Brand awareness"]];
-const AREAS = [["local","📍","Local","around your location"],["regional","🗺️","Regional","specific states / regions"],["national","🇺🇸","Nationwide","customers across the country"],["global","🌐","Global / Online","virtual services worldwide"]];
+const AREAS = [
+  ["local","📍","Local","customers near your location"],
+  ["regional","🗺️","Regional","specific states — includes your local market"],
+  ["national","🇺🇸","Nationwide","across the country — includes your local market"],
+  ["global","🌐","Global / Online","worldwide — includes national, regional & local"]
+];
 const AUDS = ["Families","Business travelers","Tourists","Locals","Homeowners","Young professionals","Seniors","Students","Event visitors"];
 
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function inline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")}
-function tier(b){return b<800?["Starter","1 channel"]:b<3000?["Growth","up to 3 channels"]:["Pro","up to 5 channels"]}
 function industryLabel(){
   if(S.biz.vertical==="general") return S.biz.customInd||"business";
   return (INDUSTRIES.find(x=>x[0]===S.biz.vertical)||["","","business"])[2];
@@ -317,9 +395,14 @@ function effectiveVertical(){
 }
 function areaText(){
   if(S.areaMode==="local") return S.radius+" mi around "+(S.biz.city||"your location");
-  if(S.areaMode==="regional") return "Regional: "+(S.regions||"selected regions");
-  if(S.areaMode==="national") return "Nationwide";
-  return "Global / online";
+  if(S.areaMode==="regional") return (S.regions||"Selected regions")+" + local market";
+  if(S.areaMode==="national") return "Nationwide (includes your local market)";
+  return "Global & online (covers national, regional and local)";
+}
+function toast(msg,type){
+  const t=document.createElement("div");t.className="toast"+(type?" "+type:"");t.textContent=msg;
+  document.getElementById("toasts").appendChild(t);
+  setTimeout(()=>{t.style.opacity="0";t.style.transition="opacity .4s";setTimeout(()=>t.remove(),450)},3400);
 }
 
 /* ============ markdown ============ */
@@ -351,6 +434,11 @@ async function api(path,opts){const r=await fetch(path,opts);if(r.status===401){
 async function call(payload){return api("/route",{method:"POST",headers:hdrs(),body:JSON.stringify(payload)})}
 function showGate(f){document.getElementById("gateOverlay").style.display=f?"flex":"none";if(f)setTimeout(()=>document.getElementById("gateInput").focus(),50)}
 function submitGate(){const v=document.getElementById("gateInput").value.trim();if(v){localStorage.setItem("beacon_access",v);showGate(false)}}
+async function getPricing(){
+  if(S.pricing)return S.pricing;
+  try{const p=await api("/pricing");if(p.ok){S.pricing=p;return p}}catch(e){}
+  return null;
+}
 
 /* ============ wizard ============ */
 const STEPS=["Business","Goals","Reach","Review"];
@@ -365,6 +453,25 @@ function drawStepper(){
 }
 function fld(id,label,val,ph,req){
   return '<div class="fld"><label>'+label+(req?' <span class="req">*</span>':'')+'</label><input id="'+id+'" value="'+esc(val)+'" placeholder="'+esc(ph||"")+'"/></div>';
+}
+function deliverRows(){
+  const a=(S.pricing&&S.pricing.alacarte)||null;
+  const pr=k=>a?'$'+a[k].toFixed(2):'';
+  const qtyBtns=[1,2,3,4].map(n=>'<span class="qty'+(S.deliver.qty===n?" sel":"")+'" onclick="S.deliver.qty='+n+';drawStep()">'+n+'</span>').join("");
+  return '<label class="seclabel">What should Beacon build? <span class="req">*</span></label>'
+    +'<div class="delivrow on"><div class="dl"><div><div class="dt">📋 Campaign strategy</div><div class="dd">Audience, channels, budget split, keywords — always included</div></div></div><div class="dprice">'+pr("strategy")+'</div></div>'
+    +'<div class="delivrow'+(S.deliver.creative?" on":"")+'"><div class="dl"><label class="switch"><input type="checkbox" '+(S.deliver.creative?"checked":"")+' onchange="S.deliver.creative=this.checked;drawStep()"/><span class="tr"></span></label><div><div class="dt">🎬 Ad creative</div><div class="dd">Scripts, hooks and angles for your ads</div></div></div><div class="dprice">'+pr("creative")+'</div></div>'
+    +'<div class="delivrow'+(S.deliver.images?" on":"")+'"><div class="dl"><label class="switch"><input type="checkbox" '+(S.deliver.images?"checked":"")+' onchange="S.deliver.images=this.checked;drawStep()"/><span class="tr"></span></label><div><div class="dt">🖼️ Ad images</div><div class="dd">Professional visuals — '+(a?'$'+a.image.toFixed(2)+' each':'')+'</div></div></div>'
+    +(S.deliver.images?'<div class="qtyrow"><span style="font-size:12px;color:var(--slate);font-weight:600">Qty</span>'+qtyBtns+'</div>':'')
+    +'</div>';
+}
+function estimate(){
+  const a=(S.pricing&&S.pricing.alacarte)||null;
+  if(!a)return null;
+  let t=a.strategy;
+  if(S.deliver.creative)t+=a.creative;
+  if(S.deliver.images)t+=a.image*S.deliver.qty;
+  return t;
 }
 function drawStep(){
   drawStepper();
@@ -388,14 +495,15 @@ function drawStep(){
     let g='<div class="choices">';
     GOALS.forEach(([v,ic,lb])=>{g+='<div class="choice'+(S.goals.includes(v)?" sel":"")+'" onclick="toggleGoal(\''+v+'\')"><div class="ic">'+ic+'</div><div class="lb">'+lb+'</div></div>'});
     g+='</div>';
-    const [tn,td]=tier(S.budget);
     w.innerHTML='<h2>What does success look like?</h2><p class="sub">Pick every goal that matters — Beacon blends them into one coordinated campaign.</p>'
       +'<label class="seclabel">Your goals <span class="req">*</span> (select all that apply)</label>'+g
       +'<div class="slwrap"><div class="slhead"><span class="lab">Monthly ad budget</span><span class="val">$'+S.budget.toLocaleString()+'</span></div>'
       +'<input type="range" min="250" max="10000" step="250" value="'+S.budget+'" oninput="S.budget=+this.value;drawStep()"/>'
       +'<div class="slmarks"><span>$250</span><span>$2.5k</span><span>$5k</span><span>$10k</span></div>'
-      +'<div class="tierline">Suggested plan: <b>'+tn+'</b> — '+td+'. Ad spend goes to the platforms directly.</div></div>'
+      +'<div class="tierline">Ad spend goes to the platforms directly — Beacon never marks it up.</div></div>'
+      +deliverRows()
       +'<div class="wnav"><button class="btn ghost" onclick="back()">← Back</button><button class="btn primary" onclick="next()">Continue →</button></div>';
+    if(!S.pricing)getPricing().then(()=>{if(S.step===2)drawStep()});
   }
   if(S.step===3){
     let am='<div class="choices">';
@@ -409,14 +517,14 @@ function drawStep(){
     } else if(S.areaMode==="regional"){
       areaDetail='<div class="fld"><label>Which states or regions? <span class="req">*</span></label><input id="f_regions" value="'+esc(S.regions)+'" placeholder="e.g. Nevada, Arizona, Southern California"/></div>';
     } else if(S.areaMode==="national"){
-      areaDetail='<p class="sub" style="margin-top:-6px">Beacon will target high-intent customers nationwide and let performance data concentrate spend in your strongest markets.</p>';
+      areaDetail='<p class="sub" style="margin-top:-6px">Beacon targets high-intent customers nationwide — including your home market — and concentrates spend where performance is strongest.</p>';
     } else {
-      areaDetail='<p class="sub" style="margin-top:-6px">Beacon will run a global, online-first strategy — ideal for virtual services, e-commerce, and remote consultations.</p>';
+      areaDetail='<p class="sub" style="margin-top:-6px">A global, online-first strategy covering every market — ideal for virtual services, e-commerce and remote consultations. Your local market is always included.</p>';
     }
     let chips='<div class="chips">';
     AUDS.forEach(a=>{chips+='<span class="chp'+(S.audiences.includes(a)?" sel":"")+'" onclick="toggleAud(\''+a+'\')">'+a+'</span>'});
     chips+='</div>';
-    w.innerHTML='<h2>Where and who do you serve?</h2><p class="sub">From the neighborhood to the whole world — Beacon adapts the strategy to your reach.</p>'
+    w.innerHTML='<h2>Where and who do you serve?</h2><p class="sub">From the neighborhood to the whole world — wider reach always includes the narrower markets.</p>'
       +'<label class="seclabel">Service area <span class="req">*</span></label>'+am+areaDetail
       +'<label class="seclabel">Who should see your ads? (pick any)</label>'+chips
       +'<div class="fld"><label>Current offer or promotion (optional)</label><input id="f_offer" value="'+esc(S.offer)+'" placeholder="e.g. 15% off direct bookings this summer"/></div>'
@@ -424,23 +532,25 @@ function drawStep(){
   }
   if(S.step===4){
     const goalsTxt=S.goals.map(v=>(GOALS.find(x=>x[0]===v)||[v,"",v])[2]).join(", ");
+    const deliv=["Strategy"].concat(S.deliver.creative?["Ad creative"]:[]).concat(S.deliver.images?[S.deliver.qty+" images"]:[]).join(" + ");
+    const est=estimate(); const intro=S.pricing&&S.pricing.intro;
     let priceHtml;
-    if(S.intro){
-      priceHtml='<div class="pricebox"><div class="l"><div class="t">🎁 '+esc(S.intro.label)+'</div><div class="s">'+esc(S.intro.desc)+'</div></div><div class="amount"><span class="was">$'+S.intro.regular.toFixed(2)+'</span>FREE</div></div>';
+    if(intro&&est!==null){
+      priceHtml='<div class="pricebox"><div class="l"><div class="t">🎁 '+esc(intro.label)+'</div><div class="s">'+esc(intro.desc)+'</div></div><div class="amount"><span class="was">$'+est.toFixed(2)+'</span>FREE</div></div>';
     } else {
-      priceHtml='<div class="pricebox"><div class="l"><div class="t">Campaign Launch Bundle</div><div class="s">Strategy + ad creative + ad images</div></div><div class="amount" id="rvPrice">…</div></div>';
+      priceHtml='<div class="pricebox"><div class="l"><div class="t">Your campaign</div><div class="s">'+esc(deliv)+'</div></div><div class="amount">'+(est!==null?'$'+est.toFixed(2):'…')+'</div></div>';
     }
-    w.innerHTML='<h2>Review & launch</h2><p class="sub">Here\'s what Beacon will build. Nothing publishes without your approval.</p>'
+    w.innerHTML='<h2>Review & create</h2><p class="sub">Here\'s what Beacon will build. Nothing publishes without your approval.</p>'
       +'<div class="rv">'
       +'<div class="rvi"><div class="k">Business</div><div class="v">'+esc(S.biz.name||"—")+'</div></div>'
       +'<div class="rvi"><div class="k">Industry</div><div class="v">'+esc(industryLabel())+'</div></div>'
       +'<div class="rvi"><div class="k">Goals</div><div class="v">'+esc(goalsTxt)+'</div></div>'
       +'<div class="rvi"><div class="k">Budget</div><div class="v">$'+S.budget.toLocaleString()+'/mo</div></div>'
       +'<div class="rvi"><div class="k">Service area</div><div class="v">'+esc(areaText())+'</div></div>'
-      +'<div class="rvi"><div class="k">Audience</div><div class="v">'+(S.audiences.length?esc(S.audiences.join(", ")):"Smart targeting")+'</div></div>'
+      +'<div class="rvi"><div class="k">Deliverables</div><div class="v">'+esc(deliv)+'</div></div>'
       +'</div>'+priceHtml
       +'<div class="wnav"><button class="btn ghost" onclick="back()">← Back</button><button class="btn gold" onclick="launch()">✨ Create my campaign</button></div>';
-    if(!S.intro) loadIntro();
+    if(!S.pricing)getPricing().then(()=>{if(S.step===4)drawStep()});
   }
 }
 function saveStep1(){
@@ -462,26 +572,38 @@ function toggleAud(a){saveStep3();const i=S.audiences.indexOf(a);if(i>=0)S.audie
 function next(){
   if(S.step===1){
     saveStep1();
-    if(!S.biz.name||!S.biz.city){alert("Please fill in your business name and city.");return}
-    if(S.biz.vertical==="general"&&!S.biz.customInd){alert("Please tell us your industry — Beacon can't build the right campaign without understanding your business.");return}
+    if(!S.biz.name||!S.biz.city){toast("Please fill in your business name and city.","bad");return}
+    if(S.biz.vertical==="general"&&!S.biz.customInd){toast("Tell us your industry so Beacon can build the right campaign.","bad");return}
   }
-  if(S.step===2&&!S.goals.length){alert("Pick at least one goal.");return}
+  if(S.step===2&&!S.goals.length){toast("Pick at least one goal.","bad");return}
   if(S.step===3){
     saveStep3();
-    if(S.areaMode==="regional"&&!S.regions){alert("Please list the states or regions you serve.");return}
+    if(S.areaMode==="regional"&&!S.regions){toast("Please list the states or regions you serve.","bad");return}
   }
   S.step=Math.min(4,S.step+1);drawStep();window.scrollTo({top:0,behavior:"smooth"});
 }
 function back(){if(S.step===3)saveStep3();S.step=Math.max(1,S.step-1);drawStep()}
-function goWizard(){document.getElementById("workspace").style.display="none";document.getElementById("wizard").style.display="block";document.getElementById("trustwrap").style.display="block";S.step=1;drawStep()}
-async function loadIntro(){try{const p=await api("/pricing");if(p.ok){S.intro=p.intro;if(S.step===4)drawStep()}}catch(e){}}
+function goWizard(){
+  document.getElementById("workspace").style.display="none";
+  document.getElementById("wizard").style.display="block";
+  document.getElementById("trustwrap").style.display="block";
+  document.getElementById("quoteband").style.display="grid";
+  drawStep();
+}
+function editCampaign(){S.step=1;goWizard();toast("Your details are loaded — adjust anything and create again.")}
+function startOver(){if(confirm("Start a fresh campaign? Your current inputs will be cleared.")){location.reload()}}
 
-/* ============ launch & generation ============ */
-const PSTEPS=[["plan","Campaign strategy"],["creative","Ad creative"],["images","Ad images"]];
-function drawProg(states){
+/* ============ generation ============ */
+function activeSteps(){
+  const st=[["plan","Campaign strategy"]];
+  if(S.deliver.creative)st.push(["creative","Ad creative"]);
+  if(S.deliver.images)st.push(["images","Ad images"]);
+  return st;
+}
+function drawProg(){
   let h="";
-  PSTEPS.forEach(([k,lb])=>{
-    const st=states[k]||"wait";
+  activeSteps().forEach(([k,lb])=>{
+    const st=S.stages[k]||"wait";
     const ic=st==="done"?"✓":st==="run"?'<span class="spinner" style="width:11px;height:11px;border-width:2px"></span>':st==="fail"?"!":"·";
     h+='<div class="pstep '+(st==="done"?"done":st==="run"?"run":st==="fail"?"fail":"")+'"><div class="ic">'+ic+'</div>'+lb+'</div>';
   });
@@ -497,69 +619,125 @@ function brief(){
     +(S.biz.desc?" What makes them special: "+S.biz.desc+".":"")
     +(S.biz.website?" Website: "+S.biz.website+".":"");
 }
-async function launch(){
-  document.getElementById("wizard").style.display="none";
-  document.getElementById("trustwrap").style.display="none";
-  document.getElementById("workspace").style.display="grid";
-  document.getElementById("railName").textContent=S.biz.name;
-  document.getElementById("railMeta").textContent=S.biz.city+(S.biz.state?", "+S.biz.state:"")+" · "+goalsText()+" · $"+S.budget.toLocaleString()+"/mo";
-  const states={plan:"run",creative:"wait",images:"wait"};drawProg(states);
-  showTab("plan");
+async function runPlanStage(){
+  S.stages.plan="run";drawProg();
   document.getElementById("panel-plan").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Building your strategy…</h3><p>Crafting a plan for '+esc(S.biz.name)+'.</p></div>';
-
   try{
     const res=await call({capability:"plan_campaign",requester:"human",payload:{
       firm:{vertical:effectiveVertical(),city:S.biz.city,state:S.biz.state,name:S.biz.name,website:S.biz.website,phone:S.biz.phone,description:S.biz.desc,industry:industryLabel()},
       goal:goalsText(),goals:S.goals,budget_monthly_usd:S.budget,
       service_area:{mode:S.areaMode,radius_miles:S.areaMode==="local"?S.radius:null,regions:S.regions||null},
       audiences:S.audiences,offer:S.offer}});
-    if(res.ok){document.getElementById("panel-plan").innerHTML='<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>';states.plan="done"}
-    else{document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';states.plan="fail"}
-  }catch(e){document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.plan="fail"}
-  drawProg(states);
-
-  states.creative="run";drawProg(states);
+    if(res.ok){document.getElementById("panel-plan").innerHTML='<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>';S.stages.plan="done"}
+    else{document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.plan="fail"}
+  }catch(e){document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';S.stages.plan="fail"}
+  drawProg();
+}
+function creativeToolbar(){
+  return '<div class="toolbar"><span class="tl">Not quite right?</span>'
+    +'<input type="text" id="cre_guide" placeholder="Tell Beacon what to change (optional) — e.g. funnier, more upscale, mention the pool…"/>'
+    +'<button class="btn primary sm" onclick="runCreativeStage(document.getElementById(\'cre_guide\').value)">↻ Regenerate</button></div>';
+}
+async function runCreativeStage(guidance){
+  S.stages.creative="run";drawProg();showTab("creative");
   document.getElementById("panel-creative").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Drafting ad creative…</h3></div>';
   try{
-    const res=await call({capability:"make_creative",requester:"planner",payload:{brief:brief(),vertical:effectiveVertical(),jurisdiction:"US"}});
+    const res=await call({capability:"make_creative",requester:"planner",payload:{brief:brief()+(guidance?" Client direction: "+guidance+".":""),vertical:effectiveVertical(),jurisdiction:"US"}});
     if(res.ok){
       S.approvalIds.creative=res.approval_id||"";
-      let html="";
+      let html=creativeToolbar();
       (res.data.variants||[]).forEach(v=>{
         html+='<div class="variant"><span class="v-id">Variant '+esc(v.id)+'</span><div class="concept doc">'+renderMarkdown(String(v.concept||""))+'</div></div>';
       });
       html+=aprInline(S.approvalIds.creative,"creative");
-      document.getElementById("panel-creative").innerHTML=html;states.creative="done";
-    }else{document.getElementById("panel-creative").innerHTML='<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';states.creative="fail"}
-  }catch(e){document.getElementById("panel-creative").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.creative="fail"}
-  drawProg(states);refreshBadge();
-
-  states.images="run";drawProg(states);
-  document.getElementById("panel-images").innerHTML='<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Creating ad images…</h3><p>This takes ~10–20 seconds.</p></div>';
+      document.getElementById("panel-creative").innerHTML=html;S.stages.creative="done";
+    }else{document.getElementById("panel-creative").innerHTML=creativeToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.creative="fail"}
+  }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-creative").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.creative="fail"}
+  drawProg();refreshBadge();
+}
+function imagesToolbar(){
+  const qty=[1,2,3,4].map(n=>'<span class="qty'+(S.deliver.qty===n?" sel":"")+'" onclick="S.deliver.qty='+n+';refreshImagesToolbar()">'+n+'</span>').join("");
+  const ref=S.refImage?'<span class="refchip"><img src="'+S.refImage+'"/>Your photo<span class="x" onclick="clearRef()">×</span></span>'
+                      :'<button class="upbtn" onclick="document.getElementById(\'refFile\').click()">📷 Use your own photo</button>';
+  return '<div class="toolbar" id="imgToolbar"><span class="tl">Images</span><span style="font-size:12px;color:var(--slate);font-weight:600">Qty</span>'+qty+ref
+    +'<button class="btn primary sm" onclick="runImagesStage()">↻ Regenerate</button></div>';
+}
+function refreshImagesToolbar(){const t=document.getElementById("imgToolbar");if(t)t.outerHTML=imagesToolbar()}
+function onRefFile(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  if(f.size>6_000_000){toast("Photo is too large — please use one under 6 MB.","bad");inp.value="";return}
+  const rd=new FileReader();
+  rd.onload=()=>{S.refImage=rd.result;refreshImagesToolbar();toast("Photo added — it will guide your next image generation.","ok")};
+  rd.readAsDataURL(f);inp.value="";
+}
+function clearRef(){S.refImage="";refreshImagesToolbar()}
+async function runImagesStage(){
+  S.stages.images="run";drawProg();showTab("images");
+  document.getElementById("panel-images").innerHTML=imagesToolbar()+'<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Creating '+S.deliver.qty+' ad image'+(S.deliver.qty>1?'s':'')+'…</h3><p>'+(S.refImage?'Refining from your photo. ':'')+'This takes ~10–30 seconds.</p></div>';
   const goalHint=S.goals.includes("brand awareness")?"aspirational brand feel":"clear conversion-focused composition";
-  const base="Professional photorealistic advertising photo for "+S.biz.name+", a "+industryLabel()+" serving "+areaText()+". "+(S.biz.desc?S.biz.desc+". ":"")+"Designed to support these goals: "+goalsText()+". "+goalHint+". Warm, trustworthy, premium quality, clean composition with space for ad text. No words, no watermarks.";
+  const base=(S.refImage
+    ? "Transform this photo into a professional, premium advertising image for "+S.biz.name+", a "+industryLabel()+". Keep the subject recognizable; elevate lighting, color and composition. "
+    : "Professional photorealistic advertising photo for "+S.biz.name+", a "+industryLabel()+" serving "+areaText()+". ")
+    +(S.biz.desc?S.biz.desc+". ":"")+"Designed to support these goals: "+goalsText()+". "+goalHint
+    +". Warm, trustworthy, premium quality, clean composition with space for ad text. No words, no watermarks.";
   try{
-    const [r1,r2]=await Promise.all([
-      call({capability:"generate_media",requester:"planner",payload:{prompt:base,media_type:"image",jurisdiction:"US"}}),
-      call({capability:"generate_media",requester:"planner",payload:{prompt:base+" Different scene and angle, golden-hour light.",media_type:"image",jurisdiction:"US"}})
-    ]);
-    let html='<div class="imggrid">',n=0,firstApr="";
-    [r1,r2].forEach(r=>{
-      if(r.ok){(r.data.assets||[]).forEach(a=>{
-        if(a.status==="rendered"&&a.data_url){n++;html+='<div class="imgcard"><img src="'+a.data_url+'"/></div>'}
-      });if(!firstApr&&r.approval_id)firstApr=r.approval_id}
-    });
+    const payload={prompt:base,media_type:"image",count:S.deliver.qty,jurisdiction:"US"};
+    if(S.refImage)payload.reference_image=S.refImage;
+    const r=await call({capability:"generate_media",requester:"planner",payload});
+    let html=imagesToolbar()+'<div class="imggrid">',n=0;
+    if(r.ok){(r.data.assets||[]).forEach(a=>{
+      if(a.status==="rendered"&&a.data_url){n++;html+='<div class="imgcard"><img src="'+a.data_url+'"/></div>'}
+    });S.approvalIds.images=r.approval_id||""}
     html+='</div>';
-    S.approvalIds.images=firstApr;
     if(n===0){
-      const a=(r1.data&&r1.data.assets&&r1.data.assets[0])||{};
-      html='<div class="gatebox2"><div class="tx"><h4>🖼️ Images are momentarily unavailable</h4><p>Please try again shortly.</p></div></div>';states.images="fail";
-    }else{html+=aprInline(firstApr,"images");states.images="done"}
+      html=imagesToolbar()+'<div class="gatebox2"><div class="tx"><h4>🖼️ Images are momentarily unavailable</h4><p>Please try Regenerate in a moment.</p></div></div>';S.stages.images="fail";
+    }else{html+=aprInline(S.approvalIds.images,"images");S.stages.images="done";toast(n+" image"+(n>1?"s":"")+" ready for your review.","ok")}
     document.getElementById("panel-images").innerHTML=html;
-  }catch(e){document.getElementById("panel-images").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>';states.images="fail"}
-  drawProg(states);refreshBadge();
+  }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-images").innerHTML=imagesToolbar()+'<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.images="fail"}
+  drawProg();refreshBadge();
+}
+async function launch(){
+  document.getElementById("wizard").style.display="none";
+  document.getElementById("trustwrap").style.display="none";
+  document.getElementById("quoteband").style.display="none";
+  document.getElementById("workspace").style.display="grid";
+  document.getElementById("railName").textContent=S.biz.name;
+  document.getElementById("railMeta").textContent=S.biz.city+(S.biz.state?", "+S.biz.state:"")+" · "+goalsText()+" · $"+S.budget.toLocaleString()+"/mo";
+  S.stages={plan:"wait"};
+  if(S.deliver.creative)S.stages.creative="wait";
+  if(S.deliver.images)S.stages.images="wait";
+  drawProg();showTab("plan");
+  document.getElementById("panel-creative").innerHTML=S.deliver.creative?"":'<div class="empty"><h3>Not included</h3><p>You chose not to include ad creative. Edit campaign details to add it.</p></div>';
+  document.getElementById("panel-images").innerHTML=S.deliver.images?"":'<div class="empty"><h3>Not included</h3><p>You chose not to include images. Edit campaign details to add them.</p></div>';
+  await runPlanStage();
+  if(S.deliver.creative)await runCreativeStage("");
+  if(S.deliver.images)await runImagesStage();
 }
 
+/* ============ launch to the real world ============ */
+async function requestLaunch(){
+  const btn=document.getElementById("launchBtn");
+  btn.disabled=true;
+  try{
+    const res=await call({capability:"publish",requester:"human",payload:{
+      jurisdiction:"US",channel:"google_search",business:S.biz.name,
+      goals:S.goals,budget_monthly_usd:S.budget,creative:{ai_disclosure:true}}});
+    if(res.approval_id){
+      S.launchTicket=res.approval_id;
+      const box=document.getElementById("launchBox");
+      box.style.display="block";
+      box.innerHTML="<b>🚀 Launch requested</b>Ticket #"+esc(res.approval_id)+" — a Beacon launch specialist completes your ad-platform setup and your campaign goes live after final review, typically within 1 business day.";
+      btn.style.display="none";
+      toast("Launch request received — we're on it.","ok");
+    } else if(!res.ok&&res.blocked_reason){
+      toast(res.blocked_reason,"bad");btn.disabled=false;
+    } else {
+      toast("Launch request submitted.","ok");btn.disabled=false;
+    }
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not reach Beacon — please try again.","bad");btn.disabled=false}
+}
+
+/* ============ approvals ============ */
 function aprInline(aid,key){
   if(!aid)return"";
   return '<div class="gatebox2" id="aprbox-'+key+'"><div class="tx"><h4>✋ Awaiting your approval</h4><p>Nothing is used in any ad until you decide.</p></div>'
@@ -573,20 +751,14 @@ async function decideInline(aid,key,decision){
       const box=document.getElementById("aprbox-"+key);
       if(box)box.outerHTML=decision==="approve"
         ?'<div class="gatebox2" style="background:var(--ok-soft);border-color:#bfe3cf"><div class="tx"><h4 style="color:var(--ok)">✓ Approved</h4><p style="color:var(--ok)">Cleared for use in your campaign.</p></div></div>'
-        :'<div class="gatebox2" style="background:var(--bad-soft);border-color:#f1c3c0"><div class="tx"><h4 style="color:var(--bad)">✗ Rejected</h4><p style="color:var(--bad)">Discarded. Generate a new version anytime.</p></div></div>';
+        :'<div class="gatebox2" style="background:var(--bad-soft);border-color:#f1c3c0"><div class="tx"><h4 style="color:var(--bad)">✗ Rejected</h4><p style="color:var(--bad)">Discarded. Use Regenerate to get a fresh version.</p></div></div>';
+      toast(decision==="approve"?"Approved — nice choice.":"Rejected — regenerate anytime.",decision==="approve"?"ok":"");
       refreshBadge();
+    } else {
+      toast(r.error||"This item is no longer available — please regenerate it.","bad");
     }
-  }catch(e){}
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not save your decision — please try again.","bad")}
 }
-
-function showTab(which){
-  ["plan","creative","images","approvals","pricing"].forEach(t=>{
-    document.getElementById("tab-"+t).classList.toggle("active",which===t);
-    document.getElementById("panel-"+t).style.display=which===t?"block":"none";
-  });
-}
-
-/* ============ approvals ============ */
 async function refreshBadge(){
   try{const r=await api("/approvals",{headers:hdrs()});
     if(r.ok){const n=r.approvals.filter(a=>a.status==="pending").length;
@@ -615,26 +787,53 @@ async function loadApprovals(){
         +'</div></div>';
     });
     p.innerHTML=h;
-  }catch(e){p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
+  }catch(e){if(String(e).indexOf("unauthorized")<0)p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
 }
 async function decideRow(aid,decision){
-  try{await api("/approvals/"+aid,{method:"POST",headers:hdrs(),body:JSON.stringify({decision,by:"client"})});loadApprovals();refreshBadge()}catch(e){}
+  try{
+    const r=await api("/approvals/"+aid,{method:"POST",headers:hdrs(),body:JSON.stringify({decision,by:"client"})});
+    if(r.ok){toast(decision==="approve"?"Approved.":"Rejected.","ok")}
+    else{toast(r.error||"Could not record the decision.","bad")}
+    loadApprovals();refreshBadge();
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not save your decision — please try again.","bad")}
 }
 
-/* ============ pricing ============ */
+/* ============ pricing & plans ============ */
+let _pmPlan="";
+function openPlanModal(key,label,price){
+  _pmPlan=key;
+  document.getElementById("pmTitle").textContent="Reserve the "+label+" plan";
+  document.getElementById("pmDesc").textContent="$"+price+" per month. Leave your details and we'll activate your plan within 1 business day — no charge today.";
+  document.getElementById("pmForm").style.display="block";
+  document.getElementById("pmDone").style.display="none";
+  document.getElementById("planModal").style.display="flex";
+}
+function closePlanModal(){document.getElementById("planModal").style.display="none"}
+async function submitPlan(){
+  const name=document.getElementById("pmName").value.trim();
+  const email=document.getElementById("pmEmail").value.trim();
+  if(!email||email.indexOf("@")<1){toast("Please enter a valid email address.","bad");return}
+  try{
+    const r=await api("/leads",{method:"POST",headers:hdrs(),body:JSON.stringify({kind:"plan_reservation",plan:_pmPlan,email,name,business:S.biz.name||""})});
+    if(r.ok){
+      document.getElementById("pmForm").style.display="none";
+      document.getElementById("pmDone").style.display="block";
+    } else { toast(r.error||"Could not submit — please try again.","bad") }
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not reach Beacon — please try again.","bad")}
+}
 async function loadPricing(){
   const p=document.getElementById("panel-pricing");
   p.innerHTML='<div class="empty"><span class="spinner"></span></div>';
   try{
-    const r=await api("/pricing");
+    const r=await api("/pricing");S.pricing=r;
     if(!r.ok){p.innerHTML='<div class="blocked">Could not load pricing.</div>';return}
-    let h='<div class="offerban"><div class="l"><h3>🎁 '+esc(r.intro.label)+'</h3><p>'+esc(r.intro.desc)+'</p></div><div class="b">FREE · reg $'+r.intro.regular.toFixed(2)+'</div></div>';
+    let h='<div class="offerban"><div class="l"><h3>🎁 '+esc(r.intro.label)+'</h3><p>'+esc(r.intro.desc)+'</p></div><div class="b">FREE · worth $'+r.intro.regular.toFixed(2)+'</div></div>';
     h+='<div class="planhead">Monthly plans</div><div class="plangrid">';
     r.plans.forEach(pl=>{
       h+='<div class="plan'+(pl.popular?" hl":"")+'"><div class="nm">'+esc(pl.label)+'</div><div class="tgl">'+esc(pl.tagline)+'</div>'
         +'<div class="pr">$'+pl.price.toFixed(2)+'</div><div class="cad">'+esc(pl.cadence)+'</div>'
         +'<ul>'+pl.features.map(f=>'<li>'+esc(f)+'</li>').join("")+'</ul>'
-        +'<button class="btn '+(pl.popular?"gold":"ghost")+'" onclick="alert(\'Plan signup is coming soon — your first campaign is free meanwhile!\')">Choose '+esc(pl.label)+'</button></div>';
+        +'<button class="btn '+(pl.popular?"gold":"ghost")+'" onclick="openPlanModal(\''+pl.key+'\',\''+esc(pl.label)+'\',\''+pl.price.toFixed(2)+'\')">Choose '+esc(pl.label)+'</button></div>';
     });
     h+='</div><div class="planhead">One-time bundles</div><div class="bgrid">';
     r.bundles.forEach(b=>{
@@ -642,7 +841,14 @@ async function loadPricing(){
     });
     h+='</div><div class="ratesnote">'+esc(r.rates_note)+'</div>';
     p.innerHTML=h;
-  }catch(e){p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
+  }catch(e){if(String(e).indexOf("unauthorized")<0)p.innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}
+}
+
+function showTab(which){
+  ["plan","creative","images","approvals","pricing"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("active",which===t);
+    document.getElementById("panel-"+t).style.display=which===t?"block":"none";
+  });
 }
 
 /* ============ boot ============ */

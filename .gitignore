@@ -3,6 +3,11 @@
 .env.*
 !.env.example
 
+# Runtime data — never commit
+approvals.json
+leads.json
+*.json.tmp
+
 # Python
 __pycache__/
 *.py[cod]

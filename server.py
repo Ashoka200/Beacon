@@ -9,7 +9,7 @@ the client approval workflow at "/approvals", and transparent
 cost-plus pricing at "/pricing".
 Gates stay in DRY_RUN, so nothing destructive runs unattended.
 """
-import os, sys, time, math, threading, uuid
+import os, sys, time, math, threading, uuid, json, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "agents"))
@@ -63,11 +63,34 @@ def _guard(request: Request, rate_limited: bool = False):
 
 
 # --- client approval workflow ------------------------------------------------
-# Every client-gated artifact (creative concepts, rendered media) is parked
-# here until an accountable human approves or rejects it. In-memory store —
-# swap for a database when client accounts land.
+# Every client-gated artifact (creative concepts, rendered media) and every
+# launch request is parked here until an accountable human decides. Persisted
+# to disk so decisions survive restarts; swap for a database at scale.
+_APPR_FILE = os.path.join(HERE, "approvals.json")
 APPROVALS: dict[str, dict] = {}
 _appr_lock = threading.Lock()
+
+
+def _load_approvals() -> None:
+    try:
+        with open(_APPR_FILE, encoding="utf-8") as f:
+            APPROVALS.update(json.load(f))
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+
+def _save_approvals() -> None:
+    # keep the newest 100 to bound file size (image payloads are large)
+    items = sorted(APPROVALS.values(), key=lambda a: -a["created_at"])[:100]
+    APPROVALS.clear()
+    APPROVALS.update({a["id"]: a for a in items})
+    tmp = _APPR_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(APPROVALS, f)
+    os.replace(tmp, _APPR_FILE)
+
+
+_load_approvals()
 
 
 def _create_approval(kind: str, label: str, data: dict) -> str:
@@ -75,7 +98,28 @@ def _create_approval(kind: str, label: str, data: dict) -> str:
     with _appr_lock:
         APPROVALS[aid] = {"id": aid, "kind": kind, "label": label, "data": data,
                           "status": "pending", "decided_by": "", "created_at": time.time()}
+        _save_approvals()
     return aid
+
+
+# --- plan reservations / leads ------------------------------------------------
+_LEADS_FILE = os.path.join(HERE, "leads.json")
+_leads_lock = threading.Lock()
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _save_lead(lead: dict) -> None:
+    with _leads_lock:
+        try:
+            with open(_LEADS_FILE, encoding="utf-8") as f:
+                leads = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            leads = []
+        leads.append(lead)
+        tmp = _LEADS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(leads, f, indent=1)
+        os.replace(tmp, _LEADS_FILE)
 
 
 # --- pricing engine (all internals stay server-side) -------------------------
@@ -183,6 +227,15 @@ def route(body: RouteIn, request: Request):
             label = cap.value
         approval_id = _create_approval(cap.value, label, resp.data)
 
+    # capture launch requests: publish is human-gated, so record the ask for
+    # the launch team and give the client a trackable ticket
+    if cap == Capability.PUBLISH and resp.gate_required == "human":
+        biz = str(body.payload.get("business", "campaign"))
+        approval_id = _create_approval("launch_request",
+                                       f"Launch — {biz} ({body.payload.get('channel', 'ads')})",
+                                       {k: v for k, v in body.payload.items()
+                                        if k != "creative_assets"})
+
     return {"ok": resp.ok, "data": resp.data, "gate_required": resp.gate_required,
             "blocked_reason": resp.blocked_reason, "notes": resp.notes,
             "approval_id": approval_id}
@@ -215,7 +268,44 @@ def decide(aid: str, body: DecisionIn, request: Request):
         item["status"] = "approved" if body.decision == "approve" else "rejected"
         item["decided_by"] = body.by
         item["decided_at"] = time.time()
+        _save_approvals()
     return {"ok": True, "approval": item}
+
+
+class LeadIn(BaseModel):
+    kind: str = "plan_reservation"
+    plan: str = ""
+    email: str
+    name: str = ""
+    business: str = ""
+    note: str = ""
+
+
+@app.post("/leads")
+def create_lead(body: LeadIn, request: Request):
+    err = _guard(request, rate_limited=True)
+    if err:
+        return err
+    if not _EMAIL.match(body.email.strip()):
+        return JSONResponse({"ok": False, "error": "valid email required"}, status_code=400)
+    lead = {"id": uuid.uuid4().hex[:10], "kind": body.kind, "plan": body.plan,
+            "email": body.email.strip(), "name": body.name.strip(),
+            "business": body.business.strip(), "note": body.note.strip(),
+            "created_at": time.time()}
+    _save_lead(lead)
+    return {"ok": True, "lead_id": lead["id"]}
+
+
+@app.get("/leads")
+def list_leads(request: Request):
+    err = _guard(request)
+    if err:
+        return err
+    try:
+        with open(_LEADS_FILE, encoding="utf-8") as f:
+            return {"ok": True, "leads": json.load(f)}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"ok": True, "leads": []}
 
 
 @app.get("/pricing")
@@ -252,12 +342,16 @@ def pricing():
          "unit": "one-time", "desc": "Strategy + 2 creative briefs + 8 ad images."},
     ]
     intro = {"key": "first_campaign_free", "label": "Your first campaign is free",
-             "desc": ("New to Beacon? Your first Campaign Launch Bundle is on us — "
+             "desc": ("New to Beacon? Your first campaign is on us — "
                       "see the full strategy, ad creative, and images before you spend a dollar."),
              "price": 0.0, "regular": launch}
+    # per-item retail so clients can buy exactly what they need
+    alacarte = {"strategy": _retail(5, _COST["plan"]),
+                "creative": _retail(4, _COST["creative"]),
+                "image": _retail(1.5, _COST["image"])}
     return {"ok": True, "currency": "USD",
             "rates_note": "Rates adjust automatically with platform demand.",
-            "intro": intro, "plans": plans, "bundles": bundles}
+            "intro": intro, "plans": plans, "bundles": bundles, "alacarte": alacarte}
 
 
 @app.get("/pending")
