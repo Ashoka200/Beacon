@@ -6,6 +6,9 @@
 # Runtime data — never commit
 approvals.json
 leads.json
+usage.json
+verifications.json
+.secret
 *.json.tmp
 
 # Python

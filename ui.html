@@ -291,6 +291,7 @@
     <div class="bizname" id="railName">—</div>
     <div class="bizmeta" id="railMeta">—</div>
     <div id="railProg" style="margin-bottom:8px"></div>
+    <div id="quotaLine" style="font-size:11.5px;color:var(--slate);border-top:1px solid var(--line);padding:9px 0;margin-bottom:6px"></div>
     <div class="launchbox" id="launchBox"></div>
     <button class="btn gold sm" style="width:100%;margin-bottom:8px" id="launchBtn" onclick="requestLaunch()">🚀 Launch campaign</button>
     <button class="btn ghost sm" style="width:100%;margin-bottom:8px" onclick="editCampaign()">✎ Edit campaign details</button>
@@ -346,8 +347,9 @@
     <h3 id="pmTitle">Reserve your plan</h3>
     <p id="pmDesc">Leave your details and we'll activate your plan within 1 business day. No charge today.</p>
     <div id="pmForm">
-      <input id="pmName" placeholder="Your name"/>
-      <input id="pmEmail" type="email" placeholder="Email address"/>
+      <input id="pmName" placeholder="Your name *"/>
+      <input id="pmEmail" type="email" placeholder="Email address *"/>
+      <input id="pmPhone" type="tel" placeholder="Mobile number *"/>
       <button class="btn gold" onclick="submitPlan()">Reserve my plan</button>
     </div>
     <div id="pmDone" style="display:none">
@@ -364,10 +366,24 @@
     <svg class="lh"><use href="#lighthouse"/></svg>
     <h3>Launch <span id="lmBiz">your campaign</span></h3>
     <p>Your campaign specialist will complete the setup and confirm before anything goes live. How can we reach you?</p>
-    <input id="lmName" placeholder="Your name"/>
-    <input id="lmEmail" type="email" placeholder="Email address"/>
-    <input id="lmPhone" placeholder="Phone (optional)"/>
-    <button class="btn gold" onclick="submitLaunch()">🚀 Request launch</button>
+    <input id="lmName" placeholder="Your name *"/>
+    <input id="lmEmail" type="email" placeholder="Email address *"/>
+    <input id="lmPhone" type="tel" placeholder="Mobile number *"/>
+    <div id="vrStart">
+      <button class="btn primary" id="vrSendBtn" onclick="sendCodes()">Verify my contact details</button>
+      <p style="font-size:11.5px;margin:8px 0 0">We confirm your email and mobile so your campaign reaches the right hands.</p>
+    </div>
+    <div id="vrCodes" style="display:none">
+      <p id="vrNote" style="font-size:12.5px"></p>
+      <input id="vrEmailCode" inputmode="numeric" maxlength="6" placeholder="Code from your email"/>
+      <input id="vrSmsCode" inputmode="numeric" maxlength="6" placeholder="Code from your text message"/>
+      <button class="btn primary" onclick="checkCodes()">Confirm codes</button>
+      <p style="font-size:11.5px;margin:8px 0 0"><a href="#" onclick="sendCodes();return false" style="color:var(--navy)">Resend codes</a></p>
+    </div>
+    <div id="vrDone" style="display:none">
+      <p style="color:var(--ok);font-weight:700;margin:6px 0">✓ Email & mobile verified</p>
+    </div>
+    <button class="btn gold" id="lmGo" onclick="submitLaunch()" disabled>🚀 Request launch</button>
   </div>
 </div>
 
@@ -386,6 +402,7 @@ const S = {
   refImage: "",                 // client-uploaded photo (data URL)
   imgGuide: "",                 // client's art direction for images
   approvalIds: {}, approved: {}, pricing: null, launchTicket: "",
+  verifyToken: "", verifyContact: null,
   stages: {}
 };
 const INDUSTRIES = [["hospitality","🏨","Hotel / Hospitality"],["dentist","🦷","Dental"],["salon","💇","Salon / Spa"],["accounting","🧾","Accounting"],["legal","⚖️","Legal"],["plumber","🔧","Home services"],["general","🏪","Other"]];
@@ -624,6 +641,21 @@ function drawProg(){
   document.getElementById("railProg").innerHTML=h;
 }
 function goalsText(){return S.goals.join(", ")}
+async function refreshQuota(){
+  try{
+    const r=await api("/quota",{headers:hdrs()});
+    if(r.ok&&r.remaining){
+      const L=r.remaining;
+      document.getElementById("quotaLine").innerHTML=
+        "Included this month: <b style='color:var(--navy)'>"+L.plan+"</b> strategies · <b style='color:var(--navy)'>"+L.creative+"</b> creatives · <b style='color:var(--navy)'>"+L.image+"</b> images"
+        +(r.plan==="free"?' — <a href="#" onclick="showTab(\'pricing\');loadPricing();return false" style="color:var(--gold-deep);font-weight:700">upgrade for more</a>':"");
+    }
+  }catch(e){}
+}
+function quotaBlocked(res){
+  if(res&&res.quota_exceeded){toast(res.blocked_reason,"gold");showTab("pricing");loadPricing();return true}
+  return false;
+}
 function brief(){
   return "Business: "+S.biz.name+" ("+industryLabel()+") in "+S.biz.city+(S.biz.state?", "+S.biz.state:"")
     +". Goals (blend all): "+goalsText()+". Monthly ad budget: $"+S.budget
@@ -653,9 +685,9 @@ async function runPlanStage(guidance){
       document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>'+aprInline(S.approvalIds.plan,"plan");
       S.stages.plan="done";if(guidance)toast("Blueprint rebuilt around your vision.","ok");
     }
-    else{document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.plan="fail"}
+    else{document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.plan="fail";quotaBlocked(res)}
   }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.plan="fail"}
-  drawProg();refreshBadge();
+  drawProg();refreshBadge();refreshQuota();
 }
 function creativeToolbar(){
   return '<div class="toolbar"><span class="tl">✍️ Direct the story</span>'
@@ -675,9 +707,9 @@ async function runCreativeStage(guidance){
       });
       html+=aprInline(S.approvalIds.creative,"creative");
       document.getElementById("panel-creative").innerHTML=html;S.stages.creative="done";
-    }else{document.getElementById("panel-creative").innerHTML=creativeToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.creative="fail"}
+    }else{document.getElementById("panel-creative").innerHTML=creativeToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.creative="fail";quotaBlocked(res)}
   }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-creative").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.creative="fail"}
-  drawProg();refreshBadge();
+  drawProg();refreshBadge();refreshQuota();
 }
 function imagesToolbar(){
   const qty=[1,2,3,4].map(n=>'<span class="qty'+(S.deliver.qty===n?" sel":"")+'" onclick="S.deliver.qty='+n+';saveImgGuide();refreshImagesToolbar()">'+n+'</span>').join("");
@@ -720,11 +752,14 @@ async function runImagesStage(){
     });S.approvalIds.images=r.approval_id||"";S.approved.images=false}
     html+='</div>';
     if(n===0){
-      html=imagesToolbar()+'<div class="gatebox2"><div class="tx"><h4>🖼️ Images are momentarily unavailable</h4><p>Please try Regenerate in a moment.</p></div></div>';S.stages.images="fail";
+      html=imagesToolbar()+(r.blocked_reason
+        ?'<div class="blocked">⚠️ '+esc(r.blocked_reason)+'</div>'
+        :'<div class="gatebox2"><div class="tx"><h4>🖼️ Images are momentarily unavailable</h4><p>Please try Regenerate in a moment.</p></div></div>');
+      S.stages.images="fail";quotaBlocked(r);
     }else{html+=aprInline(S.approvalIds.images,"images");S.stages.images="done";toast(n+" image"+(n>1?"s":"")+" ready for your review.","ok")}
     document.getElementById("panel-images").innerHTML=html;
   }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-images").innerHTML=imagesToolbar()+'<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.images="fail"}
-  drawProg();refreshBadge();
+  drawProg();refreshBadge();refreshQuota();
 }
 async function launch(){
   document.getElementById("wizard").style.display="none";
@@ -736,7 +771,7 @@ async function launch(){
   S.stages={plan:"wait"};
   if(S.deliver.creative)S.stages.creative="wait";
   if(S.deliver.images)S.stages.images="wait";
-  drawProg();showTab("plan");
+  drawProg();showTab("plan");refreshQuota();
   document.getElementById("panel-creative").innerHTML=S.deliver.creative?"":'<div class="empty"><h3>Not included</h3><p>You chose not to include ad creative. Edit campaign details to add it.</p></div>';
   document.getElementById("panel-images").innerHTML=S.deliver.images?"":'<div class="empty"><h3>Not included</h3><p>You chose not to include images. Edit campaign details to add them.</p></div>';
   await runPlanStage("");
@@ -762,14 +797,65 @@ function requestLaunch(){
     return;
   }
   document.getElementById("lmBiz").textContent=S.biz.name||"your campaign";
+  vrShow(S.verifyToken?"vrDone":"vrStart");
   document.getElementById("launchModal").style.display="flex";
 }
 function closeLaunchModal(){document.getElementById("launchModal").style.display="none"}
+
+/* ---- contact verification (email + mobile, both mandatory) ---- */
+function vrShow(which){
+  ["vrStart","vrCodes","vrDone"].forEach(id=>document.getElementById(id).style.display=id===which?"block":"none");
+  document.getElementById("lmGo").disabled=(which!=="vrDone");
+}
+function contactFields(){
+  return {name:document.getElementById("lmName").value.trim(),
+          email:document.getElementById("lmEmail").value.trim(),
+          phone:document.getElementById("lmPhone").value.trim()};
+}
+function contactValid(c){
+  if(!c.name){toast("Please add your name.","bad");return false}
+  if(!c.email||c.email.indexOf("@")<1){toast("Please enter a valid email address.","bad");return false}
+  if(c.phone.replace(/\D/g,"").length<10){toast("Please enter a valid mobile number (10+ digits).","bad");return false}
+  return true;
+}
+async function sendCodes(){
+  const c=contactFields();
+  if(!contactValid(c))return;
+  const btn=document.getElementById("vrSendBtn");if(btn)btn.disabled=true;
+  try{
+    const r=await api("/verify/start",{method:"POST",headers:hdrs(),body:JSON.stringify({email:c.email,phone:c.phone,name:c.name})});
+    if(r.ok){
+      S.verifyContact=c;
+      const manual=r.email_delivery==="manual"||r.sms_delivery==="manual";
+      document.getElementById("vrNote").textContent=manual
+        ?"Your verification codes are on their way — our team sends them to your email and mobile within a few minutes. Enter both below."
+        :"We sent a code to your email and a code to your mobile. Enter both below.";
+      vrShow("vrCodes");
+      toast("Verification codes requested.","ok");
+    }else{toast(r.error||"Could not send codes — please try again.","bad")}
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not reach Beacon — please try again.","bad")}
+  if(btn)btn.disabled=false;
+}
+async function checkCodes(){
+  const c=S.verifyContact||contactFields();
+  const ec=document.getElementById("vrEmailCode").value.trim();
+  const sc=document.getElementById("vrSmsCode").value.trim();
+  if(!ec||!sc){toast("Please enter both codes.","bad");return}
+  try{
+    const r=await api("/verify/check",{method:"POST",headers:hdrs(),body:JSON.stringify({email:c.email,phone:c.phone,email_code:ec,sms_code:sc})});
+    if(r.ok&&r.verify_token){
+      S.verifyToken=r.verify_token;
+      vrShow("vrDone");
+      toast("Verified — you're cleared to launch.","ok");
+    }else{toast(r.error||"Verification failed — please try again.","bad")}
+  }catch(e){if(String(e).indexOf("unauthorized")<0)toast("Could not reach Beacon — please try again.","bad")}
+}
+
 async function submitLaunch(){
-  const name=document.getElementById("lmName").value.trim();
-  const email=document.getElementById("lmEmail").value.trim();
-  const phone=document.getElementById("lmPhone").value.trim();
-  if(!name||!email||email.indexOf("@")<1){toast("Please add your name and a valid email so our team can reach you.","bad");return}
+  const c=S.verifyContact||contactFields();
+  if(!contactValid(c))return;
+  if(!S.verifyToken){toast("Please verify your email and mobile number first.","bad");vrShow(document.getElementById("vrCodes").style.display==="block"?"vrCodes":"vrStart");return}
+  const name=c.name,email=c.email,phone=c.phone;
   const btn=document.getElementById("launchBtn");
   btn.disabled=true;closeLaunchModal();
   try{
@@ -779,7 +865,7 @@ async function submitLaunch(){
       business_details:S.biz,goals:S.goals,budget_monthly_usd:S.budget,
       service_area:{mode:S.areaMode,radius_miles:S.areaMode==="local"?S.radius:null,regions:S.regions||null},
       contact:{name,email,phone},
-      approval_ids:ids,
+      approval_ids:ids,verify_token:S.verifyToken,
       creative:{ai_disclosure:true}}});
     if(res.approval_id){
       S.launchTicket=res.approval_id;
@@ -881,9 +967,12 @@ function closePlanModal(){document.getElementById("planModal").style.display="no
 async function submitPlan(){
   const name=document.getElementById("pmName").value.trim();
   const email=document.getElementById("pmEmail").value.trim();
+  const phone=document.getElementById("pmPhone").value.trim();
+  if(!name){toast("Please add your name.","bad");return}
   if(!email||email.indexOf("@")<1){toast("Please enter a valid email address.","bad");return}
+  if(phone.replace(/\D/g,"").length<10){toast("Please enter a valid mobile number (10+ digits).","bad");return}
   try{
-    const r=await api("/leads",{method:"POST",headers:hdrs(),body:JSON.stringify({kind:"plan_reservation",plan:_pmPlan,email,name,business:S.biz.name||""})});
+    const r=await api("/leads",{method:"POST",headers:hdrs(),body:JSON.stringify({kind:"plan_reservation",plan:_pmPlan,email,name,phone,business:S.biz.name||""})});
     if(r.ok){
       document.getElementById("pmForm").style.display="none";
       document.getElementById("pmDone").style.display="block";

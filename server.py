@@ -10,6 +10,9 @@ cost-plus pricing at "/pricing".
 Gates stay in DRY_RUN, so nothing destructive runs unattended.
 """
 import os, sys, time, math, threading, uuid, json, re
+import hmac, hashlib, secrets as pysecrets, smtplib, base64
+import urllib.request, urllib.parse
+from email.mime.text import MIMEText
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "agents"))
@@ -132,6 +135,122 @@ def _save_lead(lead: dict) -> None:
         os.replace(tmp, _LEADS_FILE)
 
 
+# --- contact verification (email + mobile OTP) -------------------------------
+# Beacon generates its own one-time codes; delivery is pluggable:
+#   EMAIL — set BEACON_SMTP_HOST / USER / PASS (a free Gmail app password works).
+#   SMS   — set TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM.
+# Until a channel is configured, codes appear in the Owner Console so the
+# owner can relay them personally — verification still works on day one.
+SMTP_HOST = os.environ.get("BEACON_SMTP_HOST", "").strip()
+SMTP_PORT = int(os.environ.get("BEACON_SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("BEACON_SMTP_USER", "").strip()
+SMTP_PASS = os.environ.get("BEACON_SMTP_PASS", "").strip()
+SMTP_FROM = os.environ.get("BEACON_SMTP_FROM", "").strip() or SMTP_USER
+TWILIO_SID = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+TWILIO_FROM = os.environ.get("TWILIO_FROM", "").strip()
+
+_SECRET_FILE = os.path.join(HERE, ".secret")
+
+
+def _load_secret() -> bytes:
+    env = os.environ.get("BEACON_SECRET", "").strip()
+    if env:
+        return env.encode()
+    try:
+        with open(_SECRET_FILE, "rb") as f:
+            key = f.read()
+            if key:
+                return key
+    except FileNotFoundError:
+        pass
+    key = pysecrets.token_bytes(32)
+    with open(_SECRET_FILE, "wb") as f:
+        f.write(key)
+    return key
+
+
+SECRET = _load_secret()
+
+_VERIF_FILE = os.path.join(HERE, "verifications.json")
+VERIF: dict[str, dict] = {}
+_verif_lock = threading.Lock()
+
+
+def _load_verif() -> None:
+    try:
+        with open(_VERIF_FILE, encoding="utf-8") as f:
+            VERIF.update(json.load(f))
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+
+def _save_verif() -> None:
+    items = sorted(VERIF.values(), key=lambda v: -v["created_at"])[:200]
+    VERIF.clear()
+    VERIF.update({v["email"]: v for v in items})
+    tmp = _VERIF_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(VERIF, f)
+    os.replace(tmp, _VERIF_FILE)
+
+
+_load_verif()
+
+
+def _digits(p: str) -> str:
+    return re.sub(r"\D", "", str(p))
+
+
+def _phone_ok(p: str) -> bool:
+    return 10 <= len(_digits(p)) <= 15
+
+
+def _vtoken(email: str, phone: str) -> str:
+    msg = (email.strip().lower() + "|" + _digits(phone)).encode()
+    return hmac.new(SECRET, msg, hashlib.sha256).hexdigest()[:40]
+
+
+def _code_hash(code: str) -> str:
+    return hashlib.sha256(SECRET + code.encode()).hexdigest()
+
+
+def _send_email_code(to: str, code: str) -> bool:
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASS):
+        return False
+    try:
+        m = MIMEText(f"Your Beacon verification code is {code}.\n"
+                     "It expires in 10 minutes. If you didn't request it, ignore this email.")
+        m["Subject"] = "Your Beacon verification code"
+        m["From"], m["To"] = SMTP_FROM, to
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.starttls()
+            s.login(SMTP_USER, SMTP_PASS)
+            s.send_message(m)
+        return True
+    except Exception:
+        return False
+
+
+def _send_sms_code(phone: str, code: str) -> bool:
+    if not (TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM):
+        return False
+    try:
+        to = phone.strip() if phone.strip().startswith("+") else "+1" + _digits(phone)
+        data = urllib.parse.urlencode({
+            "To": to, "From": TWILIO_FROM,
+            "Body": f"Beacon verification code: {code} (expires in 10 min)"}).encode()
+        req = urllib.request.Request(
+            f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_SID}/Messages.json", data=data)
+        auth = base64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
+        req.add_header("Authorization", "Basic " + auth)
+        with urllib.request.urlopen(req, timeout=15):
+            pass
+        return True
+    except Exception:
+        return False
+
+
 # --- pricing engine (all internals stay server-side) -------------------------
 # Clients only ever see clean retail prices. Internally every price has:
 #   1. a COST FLOOR  — real AI compute cost x MARKUP (default +40%), never sell below;
@@ -180,6 +299,100 @@ def _pretty(p: float) -> float:
 def _retail(anchor: float, cost: float = 0.0) -> float:
     """Demand-scaled market price, floored at cost x MARKUP."""
     return _pretty(max(anchor * _demand_factor(), cost * MARKUP))
+
+
+# --- usage quotas: the margin-protection engine -------------------------------
+# Every generation has a real AI cost. This engine guarantees the platform can
+# NEVER be generated into a loss:
+#   * each client identity gets a monthly AI-cost budget derived from what they
+#     pay, NET of card fees and per-client overhead, held to a minimum margin
+#     (default 60% over cost — tune with BEACON_MIN_MARGIN);
+#   * free users get a fixed acquisition budget (BEACON_FREE_AI_BUDGET);
+#   * unit caps per plan stop any single client from draining the budget on
+#     one item type. Whichever limit is tighter wins. Resets each calendar month.
+MIN_MARGIN = float(os.environ.get("BEACON_MIN_MARGIN", "0.60"))
+CARD_PCT = float(os.environ.get("BEACON_CARD_FEE_PCT", "0.029"))      # Stripe 2.9%
+CARD_FIXED = float(os.environ.get("BEACON_CARD_FEE_FIXED", "0.30"))  # + 30c
+OVERHEAD_PC = float(os.environ.get("BEACON_OVERHEAD_PER_CLIENT", "5.0"))  # software subs etc.
+FREE_BUDGET = float(os.environ.get("BEACON_FREE_AI_BUDGET", "0.90"))
+
+PLAN_ANCHORS = {"starter": 29, "growth": 79, "pro": 199}
+_PLAN_UNITS = {  # hard monthly unit caps per plan (plan = strategy)
+    "free":    {"plan": 2,  "creative": 3,  "image": 10},
+    "starter": {"plan": 2,  "creative": 4,  "image": 10},
+    "growth":  {"plan": 6,  "creative": 12, "image": 40},
+    "pro":     {"plan": 30, "creative": 60, "image": 120},
+}
+_KIND_LABEL = {"plan": "campaign strategies", "creative": "ad creative sets", "image": "ad images"}
+
+
+def _ai_budget(plan: str) -> float:
+    """Max AI spend per month for this plan that still leaves >= MIN_MARGIN profit."""
+    if plan not in PLAN_ANCHORS:
+        return FREE_BUDGET
+    price = _retail(PLAN_ANCHORS[plan])
+    net = price * (1 - CARD_PCT) - CARD_FIXED - OVERHEAD_PC
+    return max(net / (1 + MIN_MARGIN), FREE_BUDGET)
+
+
+_USAGE_FILE = os.path.join(HERE, "usage.json")
+USAGE: dict[str, dict] = {}
+_usage_lock = threading.Lock()
+
+
+def _load_usage() -> None:
+    try:
+        with open(_USAGE_FILE, encoding="utf-8") as f:
+            USAGE.update(json.load(f))
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+
+def _save_usage() -> None:
+    tmp = _USAGE_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(USAGE, f)
+    os.replace(tmp, _USAGE_FILE)
+
+
+_load_usage()
+
+
+def _identity(request: Request) -> str:
+    client = request.client.host if request.client else "unknown"
+    return request.headers.get("x-forwarded-for", client).split(",")[0].strip()
+
+
+def _usage_rec(ident: str) -> dict:
+    """Get-or-create this identity's record for the current calendar month."""
+    month = time.strftime("%Y-%m")
+    u = USAGE.get(ident)
+    if not u or u.get("month") != month:
+        u = {"month": month, "spend": 0.0,
+             "units": {"plan": 0, "creative": 0, "image": 0},
+             "plan": (u or {}).get("plan", "free")}
+        USAGE[ident] = u
+    return u
+
+
+def _quota_left(ident: str) -> dict:
+    with _usage_lock:
+        u = _usage_rec(ident)
+        budget = _ai_budget(u["plan"])
+        caps = _PLAN_UNITS.get(u["plan"], _PLAN_UNITS["free"])
+        left = {}
+        for kind, cost in _COST.items():
+            by_budget = int(max(budget - u["spend"], 0.0) // cost)
+            left[kind] = max(0, min(caps[kind] - u["units"][kind], by_budget))
+        return {"plan": u["plan"], "left": left}
+
+
+def _quota_charge(ident: str, kind: str, count: int) -> None:
+    with _usage_lock:
+        u = _usage_rec(ident)
+        u["units"][kind] += count
+        u["spend"] = round(u["spend"] + _COST[kind] * count, 6)
+        _save_usage()
 
 
 app = FastAPI(title="Beacon", description="Get seen. Stay trusted.")
@@ -234,13 +447,48 @@ def route(body: RouteIn, request: Request):
                                        "launch. Please review and approve your Blueprint, "
                                        "Storyboard and Gallery first — only approved "
                                        "content can go live.")}
+        # HARD RULE 2: launches require a VERIFIED email and mobile number.
+        contact = body.payload.get("contact") or {}
+        email = str(contact.get("email", "")).strip().lower()
+        phone = str(contact.get("phone", ""))
+        token = str(body.payload.get("verify_token", ""))
+        if not _EMAIL.match(email) or not _phone_ok(phone):
+            return {"ok": False, "data": {}, "gate_required": "", "notes": [],
+                    "approval_id": "",
+                    "blocked_reason": ("A valid email address and mobile number are "
+                                       "required to launch your campaign.")}
+        if not (token and hmac.compare_digest(token, _vtoken(email, phone))):
+            return {"ok": False, "data": {}, "gate_required": "", "notes": [],
+                    "approval_id": "", "verify_required": True,
+                    "blocked_reason": ("Please verify your email and mobile number "
+                                       "before launching — it only takes a minute.")}
+
+    # USAGE QUOTA: every generation costs real money, so each identity gets a
+    # monthly allowance that mathematically preserves the platform's margin.
+    _BILLABLE = {Capability.PLAN_CAMPAIGN: "plan", Capability.MAKE_CREATIVE: "creative",
+                 Capability.GENERATE_MEDIA: "image"}
+    kind = _BILLABLE.get(cap)
+    qty = 1
+    ident = _identity(request)
+    if kind and not _is_admin(request):
+        if kind == "image":
+            qty = max(1, min(4, int(body.payload.get("count", 1) or 1)))
+        q = _quota_left(ident)
+        if q["left"][kind] < qty:
+            return {"ok": False, "data": {}, "gate_required": "", "notes": [],
+                    "approval_id": "", "quota_exceeded": True,
+                    "blocked_reason": ("You've used this month's included "
+                                       + _KIND_LABEL[kind] + " on your current plan. "
+                                       "Upgrade your plan for a bigger monthly allowance — "
+                                       "or your allowance refreshes on the 1st.")}
 
     resp = ORCH.route(AgentRequest(cap, body.payload, requester=body.requester))
 
-    # billable usage feeds the demand-based pricing engine
-    if resp.ok and cap in (Capability.PLAN_CAMPAIGN, Capability.MAKE_CREATIVE,
-                           Capability.GENERATE_MEDIA):
+    # billable usage feeds the demand-based pricing engine and the quota ledger
+    if resp.ok and kind:
         _record_demand()
+        if not _is_admin(request):
+            _quota_charge(ident, kind, qty)
 
     # park client-gated artifacts in the approval queue so a human can decide
     approval_id = ""
@@ -305,6 +553,7 @@ class LeadIn(BaseModel):
     plan: str = ""
     email: str
     name: str = ""
+    phone: str = ""
     business: str = ""
     note: str = ""
 
@@ -316,10 +565,12 @@ def create_lead(body: LeadIn, request: Request):
         return err
     if not _EMAIL.match(body.email.strip()):
         return JSONResponse({"ok": False, "error": "valid email required"}, status_code=400)
+    if not _phone_ok(body.phone):
+        return JSONResponse({"ok": False, "error": "valid mobile number required"}, status_code=400)
     lead = {"id": uuid.uuid4().hex[:10], "kind": body.kind, "plan": body.plan,
             "email": body.email.strip(), "name": body.name.strip(),
-            "business": body.business.strip(), "note": body.note.strip(),
-            "created_at": time.time()}
+            "phone": _digits(body.phone), "business": body.business.strip(),
+            "note": body.note.strip(), "created_at": time.time()}
     _save_lead(lead)
     return {"ok": True, "lead_id": lead["id"]}
 
@@ -334,6 +585,96 @@ def list_leads(request: Request):
             return {"ok": True, "leads": json.load(f)}
     except (FileNotFoundError, json.JSONDecodeError):
         return {"ok": True, "leads": []}
+
+
+# --- contact verification endpoints -------------------------------------------
+class VerifyStartIn(BaseModel):
+    email: str
+    phone: str
+    name: str = ""
+
+
+class VerifyCheckIn(BaseModel):
+    email: str
+    phone: str
+    email_code: str = ""
+    sms_code: str = ""
+
+
+@app.post("/verify/start")
+def verify_start(body: VerifyStartIn, request: Request):
+    err = _guard(request, rate_limited=True)
+    if err:
+        return err
+    email = body.email.strip().lower()
+    if not _EMAIL.match(email):
+        return JSONResponse({"ok": False, "error": "valid email required"}, status_code=400)
+    if not _phone_ok(body.phone):
+        return JSONResponse({"ok": False, "error": "valid mobile number required"}, status_code=400)
+    now = time.time()
+    with _verif_lock:
+        prev = VERIF.get(email)
+        if prev and not prev.get("verified") and now - prev.get("sent_at", 0) < 60:
+            return {"ok": False, "error": "Codes were just sent — please wait a minute "
+                                          "before requesting new ones."}
+        ecode = f"{pysecrets.randbelow(10**6):06d}"
+        scode = f"{pysecrets.randbelow(10**6):06d}"
+        e_sent = _send_email_code(email, ecode)
+        s_sent = _send_sms_code(body.phone, scode)
+        rec = {"email": email, "phone": _digits(body.phone), "name": body.name.strip(),
+               "ehash": _code_hash(ecode), "shash": _code_hash(scode),
+               "email_delivery": "sent" if e_sent else "manual",
+               "sms_delivery": "sent" if s_sent else "manual",
+               "expires": now + 600, "attempts": 0, "verified": False,
+               "sent_at": now, "created_at": now,
+               # plaintext kept ONLY for channels the owner must relay by hand
+               "relay": {**({} if e_sent else {"email": ecode}),
+                         **({} if s_sent else {"sms": scode})}}
+        VERIF[email] = rec
+        _save_verif()
+    return {"ok": True, "email_delivery": rec["email_delivery"],
+            "sms_delivery": rec["sms_delivery"], "expires_in": 600}
+
+
+@app.post("/verify/check")
+def verify_check(body: VerifyCheckIn, request: Request):
+    err = _guard(request, rate_limited=True)
+    if err:
+        return err
+    email = body.email.strip().lower()
+    with _verif_lock:
+        rec = VERIF.get(email)
+        if not rec or rec.get("phone") != _digits(body.phone):
+            return {"ok": False, "error": "Please request verification codes first."}
+        if rec.get("verified"):
+            return {"ok": True, "verified": True, "verify_token": _vtoken(email, body.phone)}
+        if time.time() > rec["expires"]:
+            return {"ok": False, "error": "Your codes expired — please request new ones."}
+        if rec["attempts"] >= 8:
+            return {"ok": False, "error": "Too many attempts — please request new codes."}
+        rec["attempts"] += 1
+        e_ok = hmac.compare_digest(_code_hash(body.email_code.strip()), rec["ehash"])
+        s_ok = hmac.compare_digest(_code_hash(body.sms_code.strip()), rec["shash"])
+        if not (e_ok and s_ok):
+            _save_verif()
+            which = [] if e_ok else ["email code"]
+            which += [] if s_ok else ["text code"]
+            return {"ok": False, "error": "The " + " and ".join(which) + " didn't match — "
+                                          "please double-check and try again."}
+        rec["verified"] = True
+        rec["relay"] = {}
+        _save_verif()
+    return {"ok": True, "verified": True, "verify_token": _vtoken(email, body.phone)}
+
+
+@app.get("/quota")
+def quota(request: Request):
+    err = _guard(request)
+    if err:
+        return err
+    q = _quota_left(_identity(request))
+    return {"ok": True, "plan": q["plan"], "remaining": q["left"],
+            "note": "Allowances refresh on the 1st of each month."}
 
 
 @app.get("/pricing")
@@ -391,9 +732,6 @@ def pending():
 # Activates the moment STRIPE_SECRET_KEY is set; until then the UI falls back
 # to the reservation flow. Prices are computed SERVER-side from the plan key —
 # never trusted from the client.
-_PLAN_ANCHORS = {"starter": 29, "growth": 79, "pro": 199}
-
-
 class CheckoutIn(BaseModel):
     plan: str
     email: str = ""
@@ -404,14 +742,14 @@ def checkout(body: CheckoutIn, request: Request):
     err = _guard(request, rate_limited=True)
     if err:
         return err
-    if body.plan not in _PLAN_ANCHORS:
+    if body.plan not in PLAN_ANCHORS:
         return JSONResponse({"ok": False, "error": "unknown plan"}, status_code=400)
     if not STRIPE_KEY:
         return {"ok": False, "error": "payments_not_configured"}
     try:
         import stripe
         stripe.api_key = STRIPE_KEY
-        price = _retail(_PLAN_ANCHORS[body.plan])
+        price = _retail(PLAN_ANCHORS[body.plan])
         base = str(request.base_url).rstrip("/")
         session = stripe.checkout.Session.create(
             mode="subscription",
@@ -446,6 +784,20 @@ def admin_data(request: Request):
         leads = []
     with _appr_lock:
         approvals = sorted(APPROVALS.values(), key=lambda a: -a["created_at"])
+    now = time.time()
+    with _verif_lock:
+        verifs = [{"email": v["email"], "phone": v["phone"], "name": v.get("name", ""),
+                   "verified": v["verified"], "relay": v.get("relay", {}),
+                   "email_delivery": v.get("email_delivery", ""),
+                   "sms_delivery": v.get("sms_delivery", ""),
+                   "expired": now > v.get("expires", 0), "created_at": v["created_at"]}
+                  for v in sorted(VERIF.values(), key=lambda v: -v["created_at"])[:50]]
+    with _usage_lock:
+        month = time.strftime("%Y-%m")
+        usage = [{"identity": k, "plan": u["plan"], "units": u["units"],
+                  "spend": round(u.get("spend", 0.0), 4)}
+                 for k, u in USAGE.items() if u.get("month") == month]
+        usage.sort(key=lambda u: -u["spend"])
     stats = {
         "demand_factor": round(_demand_factor(), 3),
         "billable_actions_24h": len(_demand_events),
@@ -455,5 +807,28 @@ def admin_data(request: Request):
                                        and a["kind"] == "launch_request"),
         "leads_total": len(leads),
         "payments_configured": bool(STRIPE_KEY),
+        "otp_email_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASS),
+        "otp_sms_configured": bool(TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM),
+        "ai_spend_month": round(sum(u["spend"] for u in usage), 4),
     }
-    return {"ok": True, "stats": stats, "leads": leads, "approvals": approvals}
+    return {"ok": True, "stats": stats, "leads": leads, "approvals": approvals,
+            "verifications": verifs, "usage": usage[:50]}
+
+
+class GrantIn(BaseModel):
+    identity: str
+    plan: str
+
+
+@app.post("/admin/grant")
+def admin_grant(body: GrantIn, request: Request):
+    """Owner assigns a plan to a client identity (after they subscribe/pay)."""
+    if ADMIN_CODE and not _is_admin(request):
+        return JSONResponse({"ok": False, "error": "owner code required"}, status_code=401)
+    if body.plan not in ("free", *PLAN_ANCHORS):
+        return JSONResponse({"ok": False, "error": "unknown plan"}, status_code=400)
+    with _usage_lock:
+        u = _usage_rec(body.identity.strip())
+        u["plan"] = body.plan
+        _save_usage()
+    return {"ok": True, "identity": body.identity.strip(), "plan": body.plan}

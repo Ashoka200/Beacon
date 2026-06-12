@@ -55,7 +55,10 @@
 <div class="wrap" id="main" style="display:none">
   <div class="stats" id="stats"></div>
   <div class="warn" id="payWarn" style="display:none">💳 Payments are not connected yet — plan signups are collected as reservations. Add your STRIPE_SECRET_KEY to accept cards, Google Pay & Apple Pay.</div>
+  <div class="warn" id="otpWarn" style="display:none">🔐 Automatic code delivery is not set up yet — relay the verification codes below to clients yourself (text or email them). To automate: set BEACON_SMTP_HOST/USER/PASS for email and TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM for SMS.</div>
   <h2>🚀 Launch requests</h2><div class="card" id="launches"></div>
+  <h2>🔐 Contact verifications</h2><div class="card" id="verifs"></div>
+  <h2>📊 Client usage this month</h2><div class="card" id="usage"></div>
   <h2>✋ Client approvals</h2><div class="card" id="approvals"></div>
   <h2>📥 Plan reservations & leads</h2><div class="card" id="leads"></div>
 </div>
@@ -69,6 +72,12 @@ function when(t){return new Date(t*1000).toLocaleString()}
 async function decide(aid,decision){
   const r=await fetch("/approvals/"+aid,{method:"POST",headers:{"Content-Type":"application/json","X-Beacon-Admin":code()},body:JSON.stringify({decision,by:"owner"})});
   await r.json();load();
+}
+async function grant(ident){
+  const plan=document.getElementById("plan-"+CSS.escape(ident)).value;
+  const r=await fetch("/admin/grant",{method:"POST",headers:{"Content-Type":"application/json","X-Beacon-Admin":code()},body:JSON.stringify({identity:ident,plan})});
+  const d=await r.json();
+  if(d.ok)load();else alert(d.error||"Could not update plan");
 }
 
 function rowHtml(a,isLaunch){
@@ -102,15 +111,38 @@ async function load(){
     +'<div class="stat"><div class="k">Approvals pending</div><div class="v">'+s.pending_approvals+'</div></div>'
     +'<div class="stat"><div class="k">Leads</div><div class="v">'+s.leads_total+'</div></div>'
     +'<div class="stat"><div class="k">Actions (24h)</div><div class="v">'+s.billable_actions_24h+'</div></div>'
-    +'<div class="stat"><div class="k">Demand factor</div><div class="v">'+s.demand_factor+'×</div></div>';
+    +'<div class="stat"><div class="k">Demand factor</div><div class="v">'+s.demand_factor+'×</div></div>'
+    +'<div class="stat"><div class="k">AI cost (month)</div><div class="v">$'+(s.ai_spend_month||0).toFixed(2)+'</div></div>';
   document.getElementById("payWarn").style.display=s.payments_configured?"none":"block";
+  document.getElementById("otpWarn").style.display=(s.otp_email_configured&&s.otp_sms_configured)?"none":"block";
   const launches=d.approvals.filter(a=>a.kind==="launch_request");
   const rest=d.approvals.filter(a=>a.kind!=="launch_request");
   document.getElementById("launches").innerHTML=launches.length?launches.map(a=>rowHtml(a,true)).join(""):'<div class="muted">No launch requests yet.</div>';
   document.getElementById("approvals").innerHTML=rest.length?rest.map(a=>rowHtml(a,false)).join(""):'<div class="muted">Nothing in the approval queue.</div>';
+
+  const verifs=d.verifications||[];
+  document.getElementById("verifs").innerHTML=verifs.length
+    ?'<table><tr><th>When</th><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Codes to relay</th></tr>'
+      +verifs.map(v=>{
+        const codes=v.verified?'—':Object.entries(v.relay||{}).map(([ch,c])=>ch.toUpperCase()+': <b>'+esc(c)+'</b>').join(' · ')||'sent automatically';
+        const st=v.verified?'<span class="st approved">VERIFIED</span>':v.expired?'<span class="st rejected">EXPIRED</span>':'<span class="st pending">WAITING</span>';
+        return '<tr><td>'+when(v.created_at)+'</td><td>'+esc(v.name)+'</td><td>'+esc(v.email)+'</td><td>'+esc(v.phone)+'</td><td>'+st+'</td><td>'+codes+'</td></tr>';
+      }).join("")+'</table>'
+    :'<div class="muted">No verifications yet — they appear when a client verifies their contact details at launch.</div>';
+
+  const usage=d.usage||[];
+  const PLANS=["free","starter","growth","pro"];
+  document.getElementById("usage").innerHTML=usage.length
+    ?'<table><tr><th>Client (IP)</th><th>Plan</th><th>Strategies</th><th>Creatives</th><th>Images</th><th>AI cost</th><th>Set plan</th></tr>'
+      +usage.map(u=>'<tr><td>'+esc(u.identity)+'</td><td><span class="st approved">'+esc(u.plan).toUpperCase()+'</span></td>'
+        +'<td>'+u.units.plan+'</td><td>'+u.units.creative+'</td><td>'+u.units.image+'</td><td>$'+u.spend.toFixed(2)+'</td>'
+        +'<td><select id="plan-'+esc(u.identity)+'">'+PLANS.map(p=>'<option'+(p===u.plan?' selected':'')+'>'+p+'</option>').join("")+'</select> '
+        +'<button class="btn navy" style="padding:4px 10px;font-size:11px" onclick="grant(\''+esc(u.identity)+'\')">Apply</button></td></tr>').join("")+'</table>'
+    :'<div class="muted">No usage yet this month.</div>';
+
   document.getElementById("leads").innerHTML=d.leads.length
-    ?'<table><tr><th>When</th><th>Plan</th><th>Name</th><th>Email</th><th>Business</th></tr>'
-      +d.leads.slice().reverse().map(l=>'<tr><td>'+when(l.created_at)+'</td><td>'+esc(l.plan||l.kind)+'</td><td>'+esc(l.name)+'</td><td>'+esc(l.email)+'</td><td>'+esc(l.business)+'</td></tr>').join("")+'</table>'
+    ?'<table><tr><th>When</th><th>Plan</th><th>Name</th><th>Email</th><th>Mobile</th><th>Business</th></tr>'
+      +d.leads.slice().reverse().map(l=>'<tr><td>'+when(l.created_at)+'</td><td>'+esc(l.plan||l.kind)+'</td><td>'+esc(l.name)+'</td><td>'+esc(l.email)+'</td><td>'+esc(l.phone||"—")+'</td><td>'+esc(l.business)+'</td></tr>').join("")+'</table>'
     :'<div class="muted">No leads yet — they appear the moment a client reserves a plan.</div>';
 }
 if(code())load();
