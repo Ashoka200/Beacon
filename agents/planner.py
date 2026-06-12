@@ -38,4 +38,6 @@ class Planner(Agent):
                 "creative_brief": f"trust + local + clear CTA for a {vertical}",
                 "flywheel_hint": hint,
             }))
-        return AgentResponse(True, data={"plan": plan})
+        # the strategy itself needs client sign-off before anything can launch
+        return AgentResponse(True, data={"plan": plan}, gate_required="client",
+                             notes=["strategy must be client-approved before launch"])

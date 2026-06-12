@@ -385,7 +385,7 @@ const S = {
   deliver: { creative:true, images:true, qty:2 },
   refImage: "",                 // client-uploaded photo (data URL)
   imgGuide: "",                 // client's art direction for images
-  approvalIds: {}, pricing: null, launchTicket: "",
+  approvalIds: {}, approved: {}, pricing: null, launchTicket: "",
   stages: {}
 };
 const INDUSTRIES = [["hospitality","🏨","Hotel / Hospitality"],["dentist","🦷","Dental"],["salon","💇","Salon / Spa"],["accounting","🧾","Accounting"],["legal","⚖️","Legal"],["plumber","🔧","Home services"],["general","🏪","Other"]];
@@ -648,10 +648,14 @@ async function runPlanStage(guidance){
       service_area:{mode:S.areaMode,radius_miles:S.areaMode==="local"?S.radius:null,regions:S.regions||null},
       audiences:S.audiences,offer:S.offer,
       client_vision:guidance||""}});
-    if(res.ok){document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>';S.stages.plan="done";if(guidance)toast("Blueprint rebuilt around your vision.","ok")}
+    if(res.ok){
+      S.approvalIds.plan=res.approval_id||"";S.approved.plan=false;
+      document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="doc">'+renderMarkdown(String(res.data.plan||""))+'</div>'+aprInline(S.approvalIds.plan,"plan");
+      S.stages.plan="done";if(guidance)toast("Blueprint rebuilt around your vision.","ok");
+    }
     else{document.getElementById("panel-plan").innerHTML=planToolbar()+'<div class="blocked">⚠️ '+esc(res.blocked_reason||res.error||"")+'</div>';S.stages.plan="fail"}
   }catch(e){if(String(e).indexOf("unauthorized")<0){document.getElementById("panel-plan").innerHTML='<div class="blocked">⚠️ Could not reach Beacon.</div>'}S.stages.plan="fail"}
-  drawProg();
+  drawProg();refreshBadge();
 }
 function creativeToolbar(){
   return '<div class="toolbar"><span class="tl">✍️ Direct the story</span>'
@@ -664,7 +668,7 @@ async function runCreativeStage(guidance){
   try{
     const res=await call({capability:"make_creative",requester:"planner",payload:{brief:brief()+(guidance?" Client direction: "+guidance+".":""),vertical:effectiveVertical(),jurisdiction:"US"}});
     if(res.ok){
-      S.approvalIds.creative=res.approval_id||"";
+      S.approvalIds.creative=res.approval_id||"";S.approved.creative=false;
       let html=creativeToolbar();
       (res.data.variants||[]).forEach(v=>{
         html+='<div class="variant"><span class="v-id">Variant '+esc(v.id)+'</span><div class="concept doc">'+renderMarkdown(String(v.concept||""))+'</div></div>';
@@ -682,7 +686,8 @@ function imagesToolbar(){
   return '<div class="toolbar" id="imgToolbar"><span class="tl">🎨 Art direction</span>'
     +'<input type="text" id="img_guide" value="'+esc(S.imgGuide||"")+'" placeholder="Describe the look you want — e.g. cozy evening shot of the lobby, family by the pool…"/>'
     +'<span style="font-size:12px;color:var(--slate);font-weight:600">Qty</span>'+qty+ref
-    +'<button class="btn primary sm" onclick="saveImgGuide();runImagesStage()">↻ Create to my direction</button></div>';
+    +'<button class="btn primary sm" onclick="saveImgGuide();runImagesStage()">↻ Create to my direction</button>'
+    +'<div style="flex-basis:100%;font-size:11.5px;color:var(--slate)">💡 For the most authentic results, upload a real photo of your business — we\'ll professionally enhance it.</div></div>';
 }
 function saveImgGuide(){const g=document.getElementById("img_guide");if(g)S.imgGuide=g.value.trim()}
 function refreshImagesToolbar(){const t=document.getElementById("imgToolbar");if(t)t.outerHTML=imagesToolbar()}
@@ -697,13 +702,14 @@ function clearRef(){S.refImage="";refreshImagesToolbar()}
 async function runImagesStage(){
   S.stages.images="run";drawProg();showTab("images");
   document.getElementById("panel-images").innerHTML=imagesToolbar()+'<div class="empty"><span class="spinner"></span><h3 style="margin-top:12px">Your designers are creating '+S.deliver.qty+' image'+(S.deliver.qty>1?'s':'')+'…</h3><p>'+(S.refImage?'Refining from your photo. ':'')+(S.imgGuide?'Following your art direction. ':'')+'This takes ~10–30 seconds.</p></div>';
-  const goalHint=S.goals.includes("brand awareness")?"aspirational brand feel":"clear conversion-focused composition";
+  const goalHint=S.goals.includes("brand awareness")?"an inviting, aspirational mood":"a composition that naturally draws the eye to the subject";
+  const realism="Shot on a full-frame camera with a 35mm lens, natural ambient light, true-to-life colors, real textures, gentle depth of field, and the small imperfections of a genuine photograph. It must look like a real photo taken on location by a professional photographer — NOT digital art, NOT an illustration, NOT CGI: no plastic-smooth surfaces, no waxy skin, no over-saturated colors, no artificial symmetry or perfection. ";
   const base=(S.refImage
-    ? "Transform this photo into a professional, premium advertising image for "+S.biz.name+", a "+industryLabel()+". Keep the subject recognizable; elevate lighting, color and composition. "
-    : "Professional photorealistic advertising photo for "+S.biz.name+", a "+industryLabel()+" serving "+areaText()+". ")
+    ? "Edit this real photograph for "+S.biz.name+", a "+industryLabel()+". Keep the subject and setting authentic and fully recognizable; improve only lighting, color balance and framing, like a professional photo editor would. "
+    : "A candid, documentary-style photograph taken at "+S.biz.name+", a "+industryLabel()+" serving "+areaText()+". "+realism)
     +(S.imgGuide?"Client's art direction (follow closely): "+S.imgGuide+". ":"")
-    +(S.biz.desc?S.biz.desc+". ":"")+"Designed to support these goals: "+goalsText()+". "+goalHint
-    +". Warm, trustworthy, premium quality, clean composition with space for ad text. No words, no watermarks.";
+    +(S.biz.desc?"Context: "+S.biz.desc+". ":"")
+    +"The scene should feel warm and trustworthy with "+goalHint+", leaving clean space for ad text. No words, no logos, no watermarks.";
   try{
     const payload={prompt:base,media_type:"image",count:S.deliver.qty,jurisdiction:"US"};
     if(S.refImage)payload.reference_image=S.refImage;
@@ -711,7 +717,7 @@ async function runImagesStage(){
     let html=imagesToolbar()+'<div class="imggrid">',n=0;
     if(r.ok){(r.data.assets||[]).forEach(a=>{
       if(a.status==="rendered"&&a.data_url){n++;html+='<div class="imgcard"><img src="'+a.data_url+'"/></div>'}
-    });S.approvalIds.images=r.approval_id||""}
+    });S.approvalIds.images=r.approval_id||"";S.approved.images=false}
     html+='</div>';
     if(n===0){
       html=imagesToolbar()+'<div class="gatebox2"><div class="tx"><h4>🖼️ Images are momentarily unavailable</h4><p>Please try Regenerate in a moment.</p></div></div>';S.stages.images="fail";
@@ -740,7 +746,21 @@ async function launch(){
 }
 
 /* ============ launch to the real world ============ */
+const STAGE_NAMES={plan:"Blueprint",creative:"Storyboard",images:"Gallery"};
+function requiredStages(){
+  const req=["plan"];
+  if(S.deliver.creative)req.push("creative");
+  if(S.deliver.images)req.push("images");
+  return req;
+}
 function requestLaunch(){
+  // nothing goes to Google/Meta until every piece is reviewed and approved
+  const missing=requiredStages().filter(k=>!S.approved[k]);
+  if(missing.length){
+    toast("Almost there — please review and approve your "+missing.map(k=>STAGE_NAMES[k]).join(", ")+" first. Only approved content can go live.","gold");
+    showTab(missing[0]);
+    return;
+  }
   document.getElementById("lmBiz").textContent=S.biz.name||"your campaign";
   document.getElementById("launchModal").style.display="flex";
 }
@@ -753,11 +773,13 @@ async function submitLaunch(){
   const btn=document.getElementById("launchBtn");
   btn.disabled=true;closeLaunchModal();
   try{
+    const ids={};requiredStages().forEach(k=>{if(S.approvalIds[k])ids[k]=S.approvalIds[k]});
     const res=await call({capability:"publish",requester:"human",payload:{
       jurisdiction:"US",channel:"google_search",business:S.biz.name,
       business_details:S.biz,goals:S.goals,budget_monthly_usd:S.budget,
       service_area:{mode:S.areaMode,radius_miles:S.areaMode==="local"?S.radius:null,regions:S.regions||null},
       contact:{name,email,phone},
+      approval_ids:ids,
       creative:{ai_disclosure:true}}});
     if(res.approval_id){
       S.launchTicket=res.approval_id;
@@ -785,6 +807,7 @@ async function decideInline(aid,key,decision){
   try{
     const r=await api("/approvals/"+aid,{method:"POST",headers:hdrs(),body:JSON.stringify({decision,by:"client"})});
     if(r.ok){
+      S.approved[key]=(decision==="approve");
       const box=document.getElementById("aprbox-"+key);
       if(box)box.outerHTML=decision==="approve"
         ?'<div class="gatebox2" style="background:var(--ok-soft);border-color:#bfe3cf"><div class="tx"><h4 style="color:var(--ok)">✓ Approved</h4><p style="color:var(--ok)">Cleared for use in your campaign.</p></div></div>'

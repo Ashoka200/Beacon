@@ -219,6 +219,22 @@ def route(body: RouteIn, request: Request):
     except ValueError:
         return {"ok": False, "error": f"unknown capability '{body.capability}'",
                 "valid": [c.value for c in Capability]}
+
+    # HARD RULE: nothing launches unless every piece of the campaign the client
+    # received has been explicitly APPROVED. The UI sends the approval ids it
+    # holds; we verify each one server-side so the gate cannot be bypassed.
+    if cap == Capability.PUBLISH:
+        ids = [v for v in (body.payload.get("approval_ids") or {}).values() if v]
+        with _appr_lock:
+            unapproved = [a for a in ids if APPROVALS.get(a, {}).get("status") != "approved"]
+        if not ids or unapproved:
+            return {"ok": False, "data": {}, "gate_required": "", "notes": [],
+                    "approval_id": "",
+                    "blocked_reason": ("Your campaign content must be approved before "
+                                       "launch. Please review and approve your Blueprint, "
+                                       "Storyboard and Gallery first — only approved "
+                                       "content can go live.")}
+
     resp = ORCH.route(AgentRequest(cap, body.payload, requester=body.requester))
 
     # billable usage feeds the demand-based pricing engine
@@ -229,10 +245,12 @@ def route(body: RouteIn, request: Request):
     # park client-gated artifacts in the approval queue so a human can decide
     approval_id = ""
     if resp.ok and resp.gate_required == "client":
-        if cap == Capability.MAKE_CREATIVE:
+        if cap == Capability.PLAN_CAMPAIGN:
+            label = f"Campaign strategy — {body.payload.get('firm', {}).get('name', 'campaign')}"
+        elif cap == Capability.MAKE_CREATIVE:
             label = f"Ad creative — {body.payload.get('vertical', 'general')}"
         elif cap == Capability.GENERATE_MEDIA:
-            label = f"AI media — {str(body.payload.get('prompt', ''))[:70]}"
+            label = f"Ad images — {str(body.payload.get('prompt', ''))[:70]}"
         else:
             label = cap.value
         approval_id = _create_approval(cap.value, label, resp.data)
