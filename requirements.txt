@@ -5,3 +5,4 @@ uvicorn[standard]>=0.29
 anthropic>=0.69          # Claude Opus 4.8 via agents/base.py::_llm
 python-dotenv>=1.0       # loads ANTHROPIC_API_KEY from .env
 google-genai>=1.0        # Gemini "Nano Banana" image generation (MediaStudio)
+stripe>=10.0             # card / Google Pay / Apple Pay checkout (activates with STRIPE_SECRET_KEY)

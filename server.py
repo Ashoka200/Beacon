@@ -26,8 +26,12 @@ import gates
 #   Leave empty for local dev; ALWAYS set it in production.
 # RATE_LIMIT / RATE_WINDOW: max requests per IP per window (seconds).
 ACCESS_CODE = os.environ.get("BEACON_ACCESS_CODE", "").strip()
+# Owner console code — set BEACON_ADMIN_CODE to something different from the
+# client access code so clients can never open the owner console.
+ADMIN_CODE = os.environ.get("BEACON_ADMIN_CODE", "").strip() or ACCESS_CODE
 RATE_LIMIT = int(os.environ.get("BEACON_RATE_LIMIT", "20"))
 RATE_WINDOW = int(os.environ.get("BEACON_RATE_WINDOW", "600"))  # 10 min
+STRIPE_KEY = os.environ.get("STRIPE_SECRET_KEY", "").strip()
 
 _hits: dict[str, list[float]] = {}
 _hits_lock = threading.Lock()
@@ -45,8 +49,14 @@ def _rate_ok(ip: str) -> bool:
         return True
 
 
+def _is_admin(request: Request) -> bool:
+    return bool(ADMIN_CODE) and request.headers.get("x-beacon-admin", "") == ADMIN_CODE
+
+
 def _guard(request: Request, rate_limited: bool = False):
     """Access-code + (optional) rate-limit check. Returns an error response or None."""
+    if _is_admin(request):
+        return None  # the owner is never gated or rate-limited
     if ACCESS_CODE:
         if request.headers.get("x-beacon-access", "") != ACCESS_CODE:
             return JSONResponse(
@@ -317,18 +327,18 @@ def pricing():
         {"key": "starter", "label": "Starter", "price": _retail(29),
          "cadence": "per month", "popular": False,
          "tagline": "Get on the map",
-         "features": ["2 AI campaigns per month", "10 ad images", "1 advertising channel",
+         "features": ["2 campaigns per month", "10 custom ad images", "1 advertising channel",
                       "Campaign approval workflow", "Email support"]},
         {"key": "growth", "label": "Growth", "price": _retail(79),
          "cadence": "per month", "popular": True,
          "tagline": "Our most popular plan",
-         "features": ["6 AI campaigns per month", "40 ad images", "Video ad concepts",
+         "features": ["6 campaigns per month", "40 custom ad images", "Video ad concepts",
                       "Up to 3 advertising channels", "A/B creative variants",
                       "Priority support"]},
         {"key": "pro", "label": "Pro", "price": _retail(199),
          "cadence": "per month", "popular": False,
          "tagline": "For multi-location & franchises",
-         "features": ["Unlimited campaigns (fair use)", "120 ad images",
+         "features": ["Unlimited campaigns (fair use)", "120 custom ad images",
                       "All advertising channels", "Multi-location support",
                       "Quarterly strategy review", "Priority support"]},
     ]
@@ -357,3 +367,75 @@ def pricing():
 @app.get("/pending")
 def pending():
     return {"pending_approvals": gates.pending()}
+
+
+# --- real card / Google Pay / Apple Pay checkout (Stripe) ----------------------
+# Activates the moment STRIPE_SECRET_KEY is set; until then the UI falls back
+# to the reservation flow. Prices are computed SERVER-side from the plan key —
+# never trusted from the client.
+_PLAN_ANCHORS = {"starter": 29, "growth": 79, "pro": 199}
+
+
+class CheckoutIn(BaseModel):
+    plan: str
+    email: str = ""
+
+
+@app.post("/checkout")
+def checkout(body: CheckoutIn, request: Request):
+    err = _guard(request, rate_limited=True)
+    if err:
+        return err
+    if body.plan not in _PLAN_ANCHORS:
+        return JSONResponse({"ok": False, "error": "unknown plan"}, status_code=400)
+    if not STRIPE_KEY:
+        return {"ok": False, "error": "payments_not_configured"}
+    try:
+        import stripe
+        stripe.api_key = STRIPE_KEY
+        price = _retail(_PLAN_ANCHORS[body.plan])
+        base = str(request.base_url).rstrip("/")
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[{"quantity": 1, "price_data": {
+                "currency": "usd",
+                "product_data": {"name": f"Beacon {body.plan.capitalize()} plan"},
+                "unit_amount": int(round(price * 100)),
+                "recurring": {"interval": "month"}}}],
+            customer_email=body.email or None,
+            success_url=base + "/?welcome=1",
+            cancel_url=base + "/?canceled=1")
+        return {"ok": True, "url": session.url}
+    except Exception as e:
+        return {"ok": False, "error": f"{type(e).__name__}: {e}"}
+
+
+# --- owner console -------------------------------------------------------------
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page():
+    with open(os.path.join(HERE, "admin.html"), encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/admin/data")
+def admin_data(request: Request):
+    if ADMIN_CODE and not _is_admin(request):
+        return JSONResponse({"ok": False, "error": "owner code required"}, status_code=401)
+    try:
+        with open(_LEADS_FILE, encoding="utf-8") as f:
+            leads = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        leads = []
+    with _appr_lock:
+        approvals = sorted(APPROVALS.values(), key=lambda a: -a["created_at"])
+    stats = {
+        "demand_factor": round(_demand_factor(), 3),
+        "billable_actions_24h": len(_demand_events),
+        "pending_approvals": sum(1 for a in approvals if a["status"] == "pending"
+                                 and a["kind"] != "launch_request"),
+        "launch_requests_pending": sum(1 for a in approvals if a["status"] == "pending"
+                                       and a["kind"] == "launch_request"),
+        "leads_total": len(leads),
+        "payments_configured": bool(STRIPE_KEY),
+    }
+    return {"ok": True, "stats": stats, "leads": leads, "approvals": approvals}

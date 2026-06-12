@@ -16,9 +16,20 @@ class Planner(Agent):
         vertical = firm.get("vertical", "general")
         goal = req.payload.get("goal", "calls")
         hint = self.fly.top_pattern(vertical)
+        # everything the client told us (budget, goals, service area, audiences,
+        # offer, and their own campaign vision) goes to the strategist
+        details = {k: v for k, v in req.payload.items() if k != "firm" and v}
+        vision = str(req.payload.get("client_vision", "")).strip()
+        system = ("You are a senior media planner crafting a best-in-class, creative "
+                  "campaign strategy. Blend ALL stated goals into one coordinated plan. "
+                  "Respect the service area (wider areas include narrower markets). "
+                  + ("THE CLIENT HAS DESCRIBED THEIR OWN CAMPAIGN VISION — build the "
+                     "plan around it faithfully, improving it with your expertise. "
+                     if vision else "")
+                  + "Output a polished campaign plan in clean markdown.")
         plan = self._llm(
-            system="You are a senior media planner. Output a campaign plan.",
-            user=f"firm={firm} goal={goal} flywheel_hint={hint}",
+            system=system,
+            user=f"firm={firm} details={details} flywheel_hint={hint}",
             stub=str({
                 "vertical": vertical, "goal": goal,
                 "channel": "google_search",
